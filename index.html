@@ -34,7 +34,7 @@
           <p class="eyebrow">Managed Service Desk</p>
           <h1>
             <span>HELIX</span>
-            service desk support for teams that need control.
+            service desk operations.
           </h1>
           <p class="hero-text">
             We handle first-line support, ticket triage, and escalation
@@ -52,17 +52,14 @@
         </div>
 
         <div class="hero-visual" aria-hidden="true">
-          <div class="hero-glow"></div>
-          <div class="helix-field">
-            <div class="helix-ring ring-a"></div>
-            <div class="helix-ring ring-b"></div>
-            <div class="helix-ring ring-c"></div>
-            <div class="helix-ring ring-d"></div>
-            <div class="node node-a"></div>
-            <div class="node node-b"></div>
-            <div class="node node-c"></div>
-            <div class="node node-d"></div>
-            <div class="node node-e"></div>
+          <div class="hero-stage">
+            <div class="hero-glow"></div>
+            <canvas
+              class="hero-canvas"
+              id="helix-canvas"
+              width="760"
+              height="760"
+            ></canvas>
           </div>
 
           <div class="signal-log">
@@ -90,13 +87,30 @@
       </section>
 
       <section class="section section-services" id="services">
-        <div class="section-heading" data-reveal>
-          <p class="eyebrow">Queue Discipline</p>
-          <h2>Fast intake. Clear action.</h2>
-          <p>
-            Every request is logged, assessed, and either resolved or escalated
-            with the right context.
-          </p>
+        <div class="services-head">
+          <div class="section-heading" data-reveal>
+            <p class="eyebrow">Queue Discipline</p>
+            <h2>Fast intake. Clear action.</h2>
+            <p>
+              Every request is logged, assessed, and either resolved or escalated
+              with the right context.
+            </p>
+          </div>
+
+          <div
+            class="section-stage scene-stack"
+            data-scene
+            data-reveal
+            aria-hidden="true"
+          >
+            <div class="scene-shell">
+              <span class="stack-plane plane-1"></span>
+              <span class="stack-plane plane-2"></span>
+              <span class="stack-plane plane-3"></span>
+              <span class="stack-plane plane-4"></span>
+              <span class="stack-core"></span>
+            </div>
+          </div>
         </div>
 
         <div class="service-lines">
@@ -145,6 +159,28 @@
               with discipline.
             </p>
           </div>
+
+          <div
+            class="section-stage scene-cage"
+            data-scene
+            data-reveal
+            aria-hidden="true"
+          >
+            <div class="scene-shell">
+              <div class="cage-box">
+                <span class="cage-face face-front"></span>
+                <span class="cage-face face-back"></span>
+                <span class="cage-face face-left"></span>
+                <span class="cage-face face-right"></span>
+                <span class="cage-face face-top"></span>
+                <span class="cage-face face-bottom"></span>
+                <span class="cage-beam beam-x"></span>
+                <span class="cage-beam beam-y"></span>
+                <span class="cage-node node-top"></span>
+                <span class="cage-node node-bottom"></span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="workflow-steps">
@@ -186,13 +222,31 @@
       </section>
 
       <section class="section coverage" id="coverage">
-        <div class="coverage-summary" data-reveal>
-          <p class="eyebrow">Coverage Model</p>
-          <h2>Built for internal IT operations.</h2>
-          <p>
-            HELIX supports office teams, hybrid workforces, remote endpoints,
-            shared devices, and vendor-dependent operations.
-          </p>
+        <div class="coverage-side">
+          <div class="coverage-summary" data-reveal>
+            <p class="eyebrow">Coverage Model</p>
+            <h2>Built for internal IT operations.</h2>
+            <p>
+              HELIX supports office teams, hybrid workforces, remote endpoints,
+              shared devices, and vendor-dependent operations.
+            </p>
+          </div>
+
+          <div
+            class="section-stage scene-orbit"
+            data-scene
+            data-reveal
+            aria-hidden="true"
+          >
+            <div class="scene-shell">
+              <span class="orbit-ring ring-1"></span>
+              <span class="orbit-ring ring-2"></span>
+              <span class="orbit-ring ring-3"></span>
+              <span class="orbit-sphere"></span>
+              <span class="orbit-dot dot-1"></span>
+              <span class="orbit-dot dot-2"></span>
+            </div>
+          </div>
         </div>
 
         <div class="coverage-grid">
@@ -225,10 +279,27 @@
           </p>
         </div>
 
-        <div class="contact-links" data-reveal>
-          <a href="mailto:hello@helixdesk.com">hello@helixdesk.com</a>
-          <a href="tel:+18005550147">+1 (800) 555-0147</a>
-          <a href="#top">Return to top</a>
+        <div class="contact-side">
+          <div
+            class="section-stage scene-tower"
+            data-scene
+            data-reveal
+            aria-hidden="true"
+          >
+            <div class="scene-shell">
+              <span class="tower-plane tower-back"></span>
+              <span class="tower-plane tower-mid"></span>
+              <span class="tower-plane tower-front"></span>
+              <span class="tower-signal signal-a"></span>
+              <span class="tower-signal signal-b"></span>
+            </div>
+          </div>
+
+          <div class="contact-links" data-reveal>
+            <a href="mailto:hello@helixdesk.com">hello@helixdesk.com</a>
+            <a href="tel:+18005550147">+1 (800) 555-0147</a>
+            <a href="#top">Return to top</a>
+          </div>
         </div>
       </section>
     </main>
