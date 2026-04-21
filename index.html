@@ -17,6 +17,10 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="chip-network-layer" aria-hidden="true">
+      <canvas id="chip-network-canvas"></canvas>
+    </div>
+
     <header class="topbar">
       <a class="brand" href="#top" aria-label="HELIX home">HELIX</a>
       <nav class="topnav" aria-label="Primary">
@@ -54,12 +58,12 @@
         <div class="hero-visual" aria-hidden="true">
           <div class="hero-stage">
             <div class="hero-glow"></div>
-            <canvas
-              class="hero-canvas"
-              id="helix-canvas"
-              width="760"
-              height="760"
-            ></canvas>
+            <div class="hero-chip-shell">
+              <div class="hero-chip-anchor" data-chip-anchor="hero"></div>
+              <p class="chip-shell-label">HELIX CORE</p>
+              <strong>Support controller</strong>
+              <span>Intake, triage, and escalation logic.</span>
+            </div>
           </div>
 
           <div class="signal-log">
@@ -97,19 +101,11 @@
             </p>
           </div>
 
-          <div
-            class="section-stage scene-stack"
-            data-scene
-            data-reveal
-            aria-hidden="true"
-          >
-            <div class="scene-shell">
-              <span class="stack-plane plane-1"></span>
-              <span class="stack-plane plane-2"></span>
-              <span class="stack-plane plane-3"></span>
-              <span class="stack-plane plane-4"></span>
-              <span class="stack-core"></span>
-            </div>
+          <div class="chip-module chip-module-services" data-reveal aria-hidden="true">
+            <div class="chip-module-anchor" data-chip-anchor="services"></div>
+            <p>INPUT BUS</p>
+            <strong>Request intake</strong>
+            <span>Channel capture and technical routing.</span>
           </div>
         </div>
 
@@ -160,26 +156,11 @@
             </p>
           </div>
 
-          <div
-            class="section-stage scene-cage"
-            data-scene
-            data-reveal
-            aria-hidden="true"
-          >
-            <div class="scene-shell">
-              <div class="cage-box">
-                <span class="cage-face face-front"></span>
-                <span class="cage-face face-back"></span>
-                <span class="cage-face face-left"></span>
-                <span class="cage-face face-right"></span>
-                <span class="cage-face face-top"></span>
-                <span class="cage-face face-bottom"></span>
-                <span class="cage-beam beam-x"></span>
-                <span class="cage-beam beam-y"></span>
-                <span class="cage-node node-top"></span>
-                <span class="cage-node node-bottom"></span>
-              </div>
-            </div>
+          <div class="chip-module chip-module-workflow" data-reveal aria-hidden="true">
+            <div class="chip-module-anchor" data-chip-anchor="workflow"></div>
+            <p>CONTROL BUS</p>
+            <strong>Incident flow</strong>
+            <span>Prioritization, ownership, and handoff control.</span>
           </div>
         </div>
 
@@ -232,20 +213,11 @@
             </p>
           </div>
 
-          <div
-            class="section-stage scene-orbit"
-            data-scene
-            data-reveal
-            aria-hidden="true"
-          >
-            <div class="scene-shell">
-              <span class="orbit-ring ring-1"></span>
-              <span class="orbit-ring ring-2"></span>
-              <span class="orbit-ring ring-3"></span>
-              <span class="orbit-sphere"></span>
-              <span class="orbit-dot dot-1"></span>
-              <span class="orbit-dot dot-2"></span>
-            </div>
+          <div class="chip-module chip-module-coverage" data-reveal aria-hidden="true">
+            <div class="chip-module-anchor" data-chip-anchor="coverage"></div>
+            <p>SERVICE BUS</p>
+            <strong>Coverage matrix</strong>
+            <span>Identity, endpoints, collaboration, and routing.</span>
           </div>
         </div>
 
@@ -280,19 +252,11 @@
         </div>
 
         <div class="contact-side">
-          <div
-            class="section-stage scene-tower"
-            data-scene
-            data-reveal
-            aria-hidden="true"
-          >
-            <div class="scene-shell">
-              <span class="tower-plane tower-back"></span>
-              <span class="tower-plane tower-mid"></span>
-              <span class="tower-plane tower-front"></span>
-              <span class="tower-signal signal-a"></span>
-              <span class="tower-signal signal-b"></span>
-            </div>
+          <div class="chip-module chip-module-contact" data-reveal aria-hidden="true">
+            <div class="chip-module-anchor" data-chip-anchor="contact"></div>
+            <p>TERMINAL BUS</p>
+            <strong>Start connection</strong>
+            <span>Commercial contact and transition setup.</span>
           </div>
 
           <div class="contact-links" data-reveal>
