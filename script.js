@@ -9,15 +9,6 @@ const syncHeaderState = () => {
   topbar.classList.toggle("is-scrolled", window.scrollY > 18);
 };
 
-const syncHeroShift = () => {
-  const hero = document.querySelector(".hero");
-  if (!hero) return;
-
-  const rect = hero.getBoundingClientRect();
-  const shift = Math.max(-18, Math.min(18, rect.top * -0.045));
-  document.documentElement.style.setProperty("--hero-shift", `${shift}px`);
-};
-
 const revealObserver = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
@@ -64,8 +55,6 @@ const setupChipNetworkCanvas = () => {
   let height = 0;
   let animationFrame = 0;
   let running = true;
-  let pointerX = 0;
-  let pointerY = 0;
 
   const resizeCanvas = () => {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -284,14 +273,12 @@ const setupChipNetworkCanvas = () => {
   };
 
   const drawChipCore = (anchor, time) => {
-    const chipSize = Math.max(92, Math.min(132, width * 0.09));
-    const driftX = pointerX * 10;
-    const driftY = pointerY * 8;
+    const chipSize = Math.max(118, Math.min(172, width * 0.12));
     const pulse = reducedMotion.matches ? 0 : Math.sin(time * 0.0016) * 4;
 
     context.save();
-    context.translate(anchor.x + driftX, anchor.y + driftY);
-    context.rotate(-0.08 + pointerX * 0.06);
+    context.translate(anchor.x, anchor.y);
+    context.rotate(-0.08);
 
     const shellGradient = context.createLinearGradient(
       -chipSize,
@@ -406,16 +393,6 @@ const setupChipNetworkCanvas = () => {
     context.restore();
   };
 
-  const handlePointerMove = (event) => {
-    pointerX = (event.clientX / width - 0.5) * 2;
-    pointerY = (event.clientY / height - 0.5) * 2;
-  };
-
-  const handlePointerLeave = () => {
-    pointerX = 0;
-    pointerY = 0;
-  };
-
   const render = (time) => {
     if (!running) return;
 
@@ -502,27 +479,19 @@ const setupChipNetworkCanvas = () => {
   animationFrame = window.requestAnimationFrame(render);
 
   window.addEventListener("resize", resizeCanvas);
-  window.addEventListener("pointermove", handlePointerMove);
-  window.addEventListener("pointerleave", handlePointerLeave);
 
   return () => {
     running = false;
     window.cancelAnimationFrame(animationFrame);
     window.removeEventListener("resize", resizeCanvas);
-    window.removeEventListener("pointermove", handlePointerMove);
-    window.removeEventListener("pointerleave", handlePointerLeave);
   };
 };
 
 const cleanupChipNetwork = setupChipNetworkCanvas();
 
 syncHeaderState();
-syncHeroShift();
 
 window.addEventListener("scroll", () => {
   syncHeaderState();
-  syncHeroShift();
 });
-
-window.addEventListener("resize", syncHeroShift);
 window.addEventListener("beforeunload", cleanupChipNetwork);

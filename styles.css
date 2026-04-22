@@ -13,7 +13,6 @@
   --shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
   --radius: 28px;
   --max: 1240px;
-  --hero-shift: 0px;
 }
 
 *,
@@ -263,8 +262,6 @@ main {
   align-items: center;
   justify-content: center;
   perspective: 1400px;
-  transform: translateY(var(--hero-shift));
-  transition: transform 120ms linear;
   z-index: 1;
 }
 
