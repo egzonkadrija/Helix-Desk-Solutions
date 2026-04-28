@@ -3,6 +3,7 @@ const reveals = document.querySelectorAll("[data-reveal]");
 const workflowSteps = document.querySelectorAll("[data-step]");
 const chipCanvas = document.querySelector("#chip-network-canvas");
 const chipAnchors = Array.from(document.querySelectorAll("[data-chip-anchor]"));
+const heroStage = document.querySelector(".hero-stage");
 
 const syncHeaderState = () => {
   if (!topbar) return;
@@ -23,8 +24,17 @@ const revealObserver = new IntersectionObserver(
   }
 );
 
-reveals.forEach((item, index) => {
-  item.style.transitionDelay = `${Math.min(index * 40, 220)}ms`;
+const revealGroups = new Map();
+
+reveals.forEach((item) => {
+  const group = item.closest("section, .metrics") || document.body;
+  const groupIndex = revealGroups.get(group) || 0;
+  revealGroups.set(group, groupIndex + 1);
+
+  item.style.setProperty(
+    "--reveal-delay",
+    `${Math.min(groupIndex * 90, 270)}ms`
+  );
   revealObserver.observe(item);
 });
 
@@ -44,6 +54,72 @@ const workflowObserver = new IntersectionObserver(
 
 workflowSteps.forEach((step) => workflowObserver.observe(step));
 
+const setupHeroStageMotion = () => {
+  if (!heroStage) return () => {};
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+  const target = { x: 0, y: 0 };
+  const current = { x: 0, y: 0 };
+  let animationFrame = 0;
+  let running = true;
+
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+  if (reducedMotion.matches) {
+    heroStage.style.setProperty("--stage-x", "0px");
+    heroStage.style.setProperty("--stage-y", "0px");
+    heroStage.style.setProperty("--tilt-x", "0deg");
+    heroStage.style.setProperty("--tilt-y", "0deg");
+    return () => {};
+  }
+
+  const applyMotion = (time) => {
+    if (!running) return;
+
+    current.x += (target.x - current.x) * 0.08;
+    current.y += (target.y - current.y) * 0.08;
+
+    const drift = Math.sin(time * 0.0011) * 3;
+    heroStage.style.setProperty("--stage-x", `${(current.x * 8).toFixed(2)}px`);
+    heroStage.style.setProperty(
+      "--stage-y",
+      `${(current.y * 6 + drift).toFixed(2)}px`
+    );
+    heroStage.style.setProperty("--tilt-x", `${(-current.y * 4).toFixed(2)}deg`);
+    heroStage.style.setProperty("--tilt-y", `${(current.x * 5).toFixed(2)}deg`);
+
+    animationFrame = window.requestAnimationFrame(applyMotion);
+  };
+
+  const handlePointerMove = (event) => {
+    if (!finePointer.matches || reducedMotion.matches) return;
+
+    const rect = heroStage.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    target.x = clamp((event.clientX - centerX) / (rect.width / 2), -1, 1);
+    target.y = clamp((event.clientY - centerY) / (rect.height / 2), -1, 1);
+  };
+
+  const resetTarget = () => {
+    target.x = 0;
+    target.y = 0;
+  };
+
+  animationFrame = window.requestAnimationFrame(applyMotion);
+  heroStage.addEventListener("pointermove", handlePointerMove);
+  heroStage.addEventListener("pointerleave", resetTarget);
+
+  return () => {
+    running = false;
+    window.cancelAnimationFrame(animationFrame);
+    heroStage.removeEventListener("pointermove", handlePointerMove);
+    heroStage.removeEventListener("pointerleave", resetTarget);
+  };
+};
+
 const setupChipNetworkCanvas = () => {
   if (!chipCanvas || !chipAnchors.length) return () => {};
 
@@ -56,6 +132,8 @@ const setupChipNetworkCanvas = () => {
   let animationFrame = 0;
   let running = true;
 
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
   const resizeCanvas = () => {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     width = window.innerWidth;
@@ -64,20 +142,6 @@ const setupChipNetworkCanvas = () => {
     chipCanvas.width = Math.floor(width * ratio);
     chipCanvas.height = Math.floor(height * ratio);
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
-  };
-
-  const roundRectPath = (x, y, w, h, r) => {
-    const radius = Math.min(r, w / 2, h / 2);
-    context.beginPath();
-    context.moveTo(x + radius, y);
-    context.lineTo(x + w - radius, y);
-    context.quadraticCurveTo(x + w, y, x + w, y + radius);
-    context.lineTo(x + w, y + h - radius);
-    context.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
-    context.lineTo(x + radius, y + h);
-    context.quadraticCurveTo(x, y + h, x, y + h - radius);
-    context.lineTo(x, y + radius);
-    context.quadraticCurveTo(x, y, x + radius, y);
   };
 
   const getAnchorMetrics = () =>
@@ -94,157 +158,30 @@ const setupChipNetworkCanvas = () => {
       })
       .sort((a, b) => a.absY - b.absY);
 
-  const buildOrthogonalPath = (start, end, laneOffset = 0) => {
-    const midX = start.x + (end.x - start.x) * 0.52 + laneOffset;
+  const getQuadraticPoint = (start, control, end, progress) => {
+    const inverse = 1 - progress;
 
-    return [
-      { x: start.x, y: start.y },
-      { x: midX, y: start.y },
-      { x: midX, y: end.y },
-      { x: end.x, y: end.y },
-    ];
+    return {
+      x:
+        inverse * inverse * start.x +
+        2 * inverse * progress * control.x +
+        progress * progress * end.x,
+      y:
+        inverse * inverse * start.y +
+        2 * inverse * progress * control.y +
+        progress * progress * end.y,
+    };
   };
 
-  const drawPath = (points, strokeStyle, lineWidth) => {
-    if (points.length < 2) return;
-
-    context.beginPath();
-    context.moveTo(points[0].x, points[0].y);
-
-    for (let index = 1; index < points.length; index += 1) {
-      context.lineTo(points[index].x, points[index].y);
-    }
-
-    context.lineWidth = lineWidth;
-    context.lineCap = "round";
-    context.lineJoin = "round";
-    context.strokeStyle = strokeStyle;
-    context.stroke();
-  };
-
-  const drawVia = (point, active = false, radius = 7) => {
-    const glow = context.createRadialGradient(
-      point.x,
-      point.y,
-      0,
-      point.x,
-      point.y,
-      radius * 3.4
-    );
-
-    glow.addColorStop(
-      0,
-      active ? "rgba(159, 244, 215, 0.4)" : "rgba(104, 165, 244, 0.18)"
-    );
-    glow.addColorStop(1, "rgba(104, 165, 244, 0)");
-
-    context.fillStyle = glow;
-    context.beginPath();
-    context.arc(point.x, point.y, radius * 3.4, 0, Math.PI * 2);
-    context.fill();
-
-    context.fillStyle = "rgba(168, 196, 222, 0.38)";
-    context.beginPath();
-    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
-    context.fill();
-
-    context.fillStyle = active
-      ? "rgba(159, 244, 215, 0.92)"
-      : "rgba(10, 19, 28, 0.94)";
-    context.beginPath();
-    context.arc(point.x, point.y, radius * 0.42, 0, Math.PI * 2);
-    context.fill();
-  };
-
-  const getPathLength = (points) => {
-    let length = 0;
-
-    for (let index = 1; index < points.length; index += 1) {
-      const deltaX = points[index].x - points[index - 1].x;
-      const deltaY = points[index].y - points[index - 1].y;
-      length += Math.hypot(deltaX, deltaY);
-    }
-
-    return length;
-  };
-
-  const getPointOnPath = (points, progress) => {
-    const totalLength = getPathLength(points);
-    if (!totalLength) return points[0];
-
-    let distance = totalLength * progress;
-
-    for (let index = 1; index < points.length; index += 1) {
-      const start = points[index - 1];
-      const end = points[index];
-      const segmentLength = Math.hypot(end.x - start.x, end.y - start.y);
-
-      if (distance <= segmentLength) {
-        const ratio = segmentLength === 0 ? 0 : distance / segmentLength;
-        return {
-          x: start.x + (end.x - start.x) * ratio,
-          y: start.y + (end.y - start.y) * ratio,
-        };
-      }
-
-      distance -= segmentLength;
-    }
-
-    return points[points.length - 1];
-  };
-
-  const drawPulse = (points, progress, color, radius) => {
-    const point = getPointOnPath(points, progress);
-    const glow = context.createRadialGradient(
-      point.x,
-      point.y,
-      0,
-      point.x,
-      point.y,
-      radius * 3.6
-    );
-
-    glow.addColorStop(0, color);
-    glow.addColorStop(1, "rgba(120, 221, 196, 0)");
-
-    context.fillStyle = glow;
-    context.beginPath();
-    context.arc(point.x, point.y, radius * 3.6, 0, Math.PI * 2);
-    context.fill();
-
-    context.fillStyle = "rgba(240, 250, 255, 0.92)";
-    context.beginPath();
-    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
-    context.fill();
-  };
-
-  const drawBus = (points, active = false) => {
-    const offsets = active ? [-8, 0, 8] : [-6, 0, 6];
-    const traceColor = active
-      ? "rgba(159, 244, 215, 0.24)"
-      : "rgba(104, 165, 244, 0.16)";
-
-    offsets.forEach((offset) => {
-      const shifted = points.map((point, index) => {
-        if (index === 0 || index === points.length - 1) {
-          return { x: point.x, y: point.y + offset * 0.15 };
-        }
-
-        return { x: point.x, y: point.y + offset };
-      });
-
-      drawPath(shifted, "rgba(64, 88, 110, 0.14)", active ? 6 : 5);
-      drawPath(shifted, traceColor, active ? 1.6 : 1.1);
-    });
-  };
-
-  const drawBoardField = (time) => {
+  const drawOperationsField = (time) => {
     context.save();
-    context.globalAlpha = 0.5;
+    context.globalAlpha = 0.42;
 
-    const gridSize = 96;
-    for (let x = 48; x < width; x += gridSize) {
-      context.strokeStyle = "rgba(168, 196, 222, 0.025)";
+    const gridSize = 112;
+    const drift = reducedMotion.matches ? 0 : (time * 0.012) % gridSize;
+
+    for (let x = -gridSize + drift; x < width + gridSize; x += gridSize) {
+      context.strokeStyle = "rgba(198, 211, 214, 0.018)";
       context.lineWidth = 1;
       context.beginPath();
       context.moveTo(x, 0);
@@ -252,8 +189,8 @@ const setupChipNetworkCanvas = () => {
       context.stroke();
     }
 
-    for (let y = 48; y < height; y += gridSize) {
-      context.strokeStyle = "rgba(168, 196, 222, 0.02)";
+    for (let y = -gridSize + drift * 0.65; y < height + gridSize; y += gridSize) {
+      context.strokeStyle = "rgba(198, 211, 214, 0.014)";
       context.lineWidth = 1;
       context.beginPath();
       context.moveTo(0, y);
@@ -261,133 +198,228 @@ const setupChipNetworkCanvas = () => {
       context.stroke();
     }
 
-    const sweep = reducedMotion.matches ? 0 : (time * 0.06) % height;
-    context.strokeStyle = "rgba(159, 244, 215, 0.025)";
-    context.lineWidth = 2;
-    context.beginPath();
-    context.moveTo(0, sweep);
-    context.lineTo(width, sweep);
-    context.stroke();
+    for (let index = 0; index < 28; index += 1) {
+      const seed = index * 97;
+      const x = (seed * 13) % Math.max(width, 1);
+      const y =
+        ((seed * 7 + (reducedMotion.matches ? 0 : time * 0.018)) %
+          (height + 120)) -
+        60;
+      const pulse = reducedMotion.matches
+        ? 0.45
+        : 0.25 + Math.sin(time * 0.0012 + index) * 0.2;
+
+      context.fillStyle = `rgba(159, 244, 215, ${pulse * 0.18})`;
+      context.beginPath();
+      context.arc(x, y, index % 4 === 0 ? 1.8 : 1.1, 0, Math.PI * 2);
+      context.fill();
+    }
 
     context.restore();
   };
 
-  const drawChipCore = (anchor, time) => {
-    const chipSize = Math.max(118, Math.min(172, width * 0.12));
-    const pulse = reducedMotion.matches ? 0 : Math.sin(time * 0.0016) * 4;
+  const drawRadarRings = (anchor, time) => {
+    const baseRadius = clamp(Math.min(width, height) * 0.2, 130, 260);
+    const scanAngle = reducedMotion.matches
+      ? -Math.PI * 0.28
+      : (time * 0.00055) % (Math.PI * 2);
+    const ringPulse = reducedMotion.matches
+      ? 0
+      : Math.sin(time * 0.0012) * 4;
+    const rings = [0.34, 0.55, 0.78, 1];
 
     context.save();
     context.translate(anchor.x, anchor.y);
-    context.rotate(-0.08);
+    context.scale(1, 0.74);
+    context.globalCompositeOperation = "lighter";
 
-    const shellGradient = context.createLinearGradient(
-      -chipSize,
-      -chipSize,
-      chipSize,
-      chipSize
-    );
-    shellGradient.addColorStop(0, "rgba(18, 29, 39, 0.98)");
-    shellGradient.addColorStop(1, "rgba(7, 12, 18, 0.98)");
-
-    context.fillStyle = shellGradient;
-    context.strokeStyle = "rgba(168, 196, 222, 0.24)";
-    context.lineWidth = 1.4;
-    roundRectPath(-chipSize / 2, -chipSize / 2, chipSize, chipSize, 16);
+    const halo = context.createRadialGradient(0, 0, 0, 0, 0, baseRadius * 1.18);
+    halo.addColorStop(0, "rgba(159, 244, 215, 0.16)");
+    halo.addColorStop(0.5, "rgba(104, 165, 244, 0.055)");
+    halo.addColorStop(1, "rgba(120, 221, 196, 0)");
+    context.fillStyle = halo;
+    context.beginPath();
+    context.arc(0, 0, baseRadius * 1.18, 0, Math.PI * 2);
     context.fill();
-    context.stroke();
 
-    context.strokeStyle = "rgba(159, 244, 215, 0.22)";
-    roundRectPath(
-      -chipSize / 2 + 10,
-      -chipSize / 2 + 10,
-      chipSize - 20,
-      chipSize - 20,
-      10
-    );
-    context.stroke();
+    rings.forEach((size, index) => {
+      const radius = baseRadius * size + ringPulse * (index + 1) * 0.25;
 
-    const pinCount = 8;
-    const pinGap = chipSize / (pinCount + 1);
-
-    for (let index = 1; index <= pinCount; index += 1) {
-      const offset = -chipSize / 2 + pinGap * index;
-
-      context.fillStyle = "rgba(187, 198, 212, 0.58)";
-      context.fillRect(offset - 2, -chipSize / 2 - 14, 4, 14);
-      context.fillRect(offset - 2, chipSize / 2, 4, 14);
-      context.fillRect(-chipSize / 2 - 14, offset - 2, 14, 4);
-      context.fillRect(chipSize / 2, offset - 2, 14, 4);
-    }
-
-    context.strokeStyle = "rgba(104, 165, 244, 0.14)";
-    context.lineWidth = 1;
-    for (let index = -2; index <= 2; index += 1) {
+      context.strokeStyle =
+        index === rings.length - 1
+          ? "rgba(159, 244, 215, 0.26)"
+          : "rgba(198, 211, 214, 0.13)";
+      context.lineWidth = index === rings.length - 1 ? 1.4 : 1;
       context.beginPath();
-      context.moveTo(-chipSize * 0.28, index * 12);
-      context.lineTo(chipSize * 0.28, index * 12);
+      context.arc(0, 0, radius, 0, Math.PI * 2);
+      context.stroke();
+    });
+
+    for (let spoke = 0; spoke < 8; spoke += 1) {
+      const angle = (Math.PI * 2 * spoke) / 8;
+      const inner = baseRadius * 0.18;
+      const outer = baseRadius;
+
+      context.strokeStyle = "rgba(198, 211, 214, 0.06)";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+      context.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
       context.stroke();
     }
+
+    for (let wedge = 0; wedge < 10; wedge += 1) {
+      const widthAngle = 0.038 + wedge * 0.004;
+      const alpha = (10 - wedge) / 10;
+
+      context.fillStyle = `rgba(159, 244, 215, ${0.035 * alpha})`;
+      context.beginPath();
+      context.moveTo(0, 0);
+      context.arc(
+        0,
+        0,
+        baseRadius,
+        scanAngle - wedge * 0.055,
+        scanAngle + widthAngle
+      );
+      context.closePath();
+      context.fill();
+    }
+
+    context.strokeStyle = "rgba(159, 244, 215, 0.42)";
+    context.lineWidth = 1.3;
     context.beginPath();
-    context.moveTo(0, -chipSize * 0.28);
-    context.lineTo(0, chipSize * 0.28);
+    context.moveTo(0, 0);
+    context.lineTo(
+      Math.cos(scanAngle) * baseRadius,
+      Math.sin(scanAngle) * baseRadius
+    );
     context.stroke();
 
-    const coreGradient = context.createRadialGradient(
-      0,
-      0,
-      0,
-      0,
-      0,
-      chipSize * 0.42 + pulse
-    );
-    coreGradient.addColorStop(0, "rgba(226, 255, 247, 0.94)");
-    coreGradient.addColorStop(0.35, "rgba(159, 244, 215, 0.34)");
-    coreGradient.addColorStop(1, "rgba(159, 244, 215, 0)");
+    context.restore();
 
-    context.fillStyle = coreGradient;
+    context.save();
+    context.globalCompositeOperation = "lighter";
+    const core = context.createRadialGradient(
+      anchor.x,
+      anchor.y,
+      0,
+      anchor.x,
+      anchor.y,
+      58
+    );
+    core.addColorStop(0, "rgba(240, 255, 250, 0.92)");
+    core.addColorStop(0.28, "rgba(159, 244, 215, 0.28)");
+    core.addColorStop(1, "rgba(159, 244, 215, 0)");
+
+    context.fillStyle = core;
     context.beginPath();
-    context.arc(0, 0, chipSize * 0.42 + pulse, 0, Math.PI * 2);
+    context.arc(anchor.x, anchor.y, 58, 0, Math.PI * 2);
     context.fill();
 
+    context.fillStyle = "rgba(240, 255, 250, 0.92)";
+    context.beginPath();
+    context.arc(anchor.x, anchor.y, 3.2, 0, Math.PI * 2);
+    context.fill();
     context.restore();
   };
 
-  const drawSectionChip = (anchor, active, index) => {
+  const drawSignalArc = (start, end, active, index, time) => {
+    const bend = index % 2 === 0 ? -72 : 72;
+    const control = {
+      x: start.x + (end.x - start.x) * 0.5 + bend,
+      y: start.y + (end.y - start.y) * 0.28,
+    };
+
     context.save();
-    context.translate(anchor.x, anchor.y);
-
-    const widthChip = 52;
-    const heightChip = 44;
-    const tilt = index % 2 === 0 ? -4 : 4;
-
-    context.rotate((tilt * Math.PI) / 180);
-
-    const padGradient = context.createLinearGradient(-26, -22, 26, 22);
-    padGradient.addColorStop(
-      0,
-      active ? "rgba(20, 36, 48, 0.98)" : "rgba(12, 20, 29, 0.94)"
-    );
-    padGradient.addColorStop(1, "rgba(6, 10, 16, 0.98)");
-
-    context.fillStyle = padGradient;
+    context.lineCap = "round";
+    context.lineWidth = active ? 1.5 : 1;
+    context.setLineDash(active ? [4, 13] : [2, 16]);
     context.strokeStyle = active
-      ? "rgba(159, 244, 215, 0.38)"
-      : "rgba(168, 196, 222, 0.18)";
-    context.lineWidth = 1.2;
-    roundRectPath(-widthChip / 2, -heightChip / 2, widthChip, heightChip, 8);
-    context.fill();
-    context.stroke();
+      ? "rgba(159, 244, 215, 0.26)"
+      : "rgba(104, 165, 244, 0.12)";
 
-    for (let pin = -2; pin <= 2; pin += 1) {
-      context.fillStyle = "rgba(187, 198, 212, 0.48)";
-      context.fillRect(-widthChip / 2 - 10, pin * 7 - 1.5, 10, 3);
-      context.fillRect(widthChip / 2, pin * 7 - 1.5, 10, 3);
-    }
+    context.beginPath();
+    context.moveTo(start.x, start.y);
+    context.quadraticCurveTo(control.x, control.y, end.x, end.y);
+    context.stroke();
+    context.restore();
+
+    const progress = reducedMotion.matches
+      ? 0.72
+      : (time * (active ? 0.00022 : 0.00014) + index * 0.17) % 1;
+    const pulse = getQuadraticPoint(start, control, end, progress);
+
+    context.save();
+    context.globalCompositeOperation = "lighter";
+    const glow = context.createRadialGradient(
+      pulse.x,
+      pulse.y,
+      0,
+      pulse.x,
+      pulse.y,
+      active ? 24 : 16
+    );
+    glow.addColorStop(
+      0,
+      active ? "rgba(159, 244, 215, 0.56)" : "rgba(104, 165, 244, 0.34)"
+    );
+    glow.addColorStop(1, "rgba(159, 244, 215, 0)");
+
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(pulse.x, pulse.y, active ? 24 : 16, 0, Math.PI * 2);
+    context.fill();
 
     context.fillStyle = active
-      ? "rgba(159, 244, 215, 0.92)"
-      : "rgba(104, 165, 244, 0.72)";
-    roundRectPath(-8, -8, 16, 16, 3);
+      ? "rgba(240, 255, 250, 0.92)"
+      : "rgba(198, 211, 214, 0.76)";
+    context.beginPath();
+    context.arc(pulse.x, pulse.y, active ? 3 : 2.2, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  };
+
+  const drawSignalLock = (anchor, active, index, time) => {
+    const pulse = reducedMotion.matches
+      ? 0.45
+      : (time * 0.001 + index * 0.2) % 1;
+    const radius = active ? 10 + pulse * 36 : 8 + pulse * 20;
+    const alpha = active ? 0.32 * (1 - pulse) : 0.16 * (1 - pulse);
+
+    context.save();
+    context.globalCompositeOperation = "lighter";
+
+    context.strokeStyle = `rgba(159, 244, 215, ${alpha})`;
+    context.lineWidth = active ? 1.4 : 1;
+    context.beginPath();
+    context.arc(anchor.x, anchor.y, radius, 0, Math.PI * 2);
+    context.stroke();
+
+    const glow = context.createRadialGradient(
+      anchor.x,
+      anchor.y,
+      0,
+      anchor.x,
+      anchor.y,
+      active ? 32 : 22
+    );
+    glow.addColorStop(
+      0,
+      active ? "rgba(159, 244, 215, 0.42)" : "rgba(104, 165, 244, 0.2)"
+    );
+    glow.addColorStop(1, "rgba(159, 244, 215, 0)");
+
+    context.fillStyle = glow;
+    context.beginPath();
+    context.arc(anchor.x, anchor.y, active ? 32 : 22, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = active
+      ? "rgba(240, 255, 250, 0.94)"
+      : "rgba(159, 244, 215, 0.76)";
+    context.beginPath();
+    context.arc(anchor.x, anchor.y, active ? 4 : 3, 0, Math.PI * 2);
     context.fill();
 
     context.restore();
@@ -397,13 +429,15 @@ const setupChipNetworkCanvas = () => {
     if (!running) return;
 
     context.clearRect(0, 0, width, height);
-    drawBoardField(time);
+    drawOperationsField(time);
 
     const anchors = getAnchorMetrics();
     const heroAnchor = anchors.find((anchor) => anchor.name === "hero");
 
     if (!heroAnchor) {
-      animationFrame = window.requestAnimationFrame(render);
+      if (!reducedMotion.matches) {
+        animationFrame = window.requestAnimationFrame(render);
+      }
       return;
     }
 
@@ -411,87 +445,62 @@ const setupChipNetworkCanvas = () => {
     const activeAnchor = sectionAnchors.reduce((nearest, anchor) => {
       if (!nearest) return anchor;
 
-      return Math.abs(anchor.y - height * 0.48) < Math.abs(nearest.y - height * 0.48)
+      return Math.abs(anchor.y - height * 0.48) <
+        Math.abs(nearest.y - height * 0.48)
         ? anchor
         : nearest;
     }, null);
 
-    const spineX = Math.min(
-      width - 108,
-      Math.max(width * 0.6, heroAnchor.x + Math.max(120, width * 0.1))
-    );
-    const lastAnchor = sectionAnchors[sectionAnchors.length - 1] || heroAnchor;
-    const backbone = [
-      { x: heroAnchor.x + 82, y: heroAnchor.y },
-      { x: spineX, y: heroAnchor.y },
-      { x: spineX, y: lastAnchor.y + 40 },
-    ];
-
-    drawBus(backbone, true);
-    drawVia(backbone[0], true, 8);
-    drawVia(backbone[1], true, 8);
-
-    const timeLoop = reducedMotion.matches ? 0.18 : (time * 0.00011) % 1;
-    drawPulse(backbone, timeLoop, "rgba(159, 244, 215, 0.9)", 4.2);
-    drawPulse(
-      backbone,
-      (timeLoop + 0.42) % 1,
-      "rgba(104, 165, 244, 0.86)",
-      3.4
-    );
+    drawRadarRings(heroAnchor, time);
 
     sectionAnchors.forEach((anchor, index) => {
-      const branchTargetX = anchor.x + 30;
-      const laneOffset = index % 2 === 0 ? -18 : 18;
-      const branch = buildOrthogonalPath(
-        { x: spineX, y: anchor.y },
-        { x: branchTargetX, y: anchor.y },
-        laneOffset
-      );
       const isActive = activeAnchor?.name === anchor.name;
+      const target = { x: anchor.x + 18, y: anchor.y };
 
-      drawBus(branch, isActive);
-      branch.forEach((point, pointIndex) => {
-        if (pointIndex !== branch.length - 1) {
-          drawVia(point, isActive, pointIndex === 0 ? 6 : 5);
-        }
-      });
-      drawSectionChip(anchor, isActive, index);
-
-      const branchPulse = reducedMotion.matches
-        ? 0.72
-        : ((time * 0.00018 + index * 0.19) % 1);
-
-      drawPulse(
-        branch,
-        branchPulse,
-        isActive ? "rgba(159, 244, 215, 0.92)" : "rgba(104, 165, 244, 0.84)",
-        isActive ? 4 : 3
-      );
+      if (target.y > -120 && target.y < height + 120) {
+        drawSignalArc(heroAnchor, target, isActive, index, time);
+        drawSignalLock(anchor, isActive, index, time);
+      }
     });
 
-    drawChipCore(heroAnchor, time);
+    if (!reducedMotion.matches) {
+      animationFrame = window.requestAnimationFrame(render);
+    }
+  };
 
-    animationFrame = window.requestAnimationFrame(render);
+  const handleResize = () => {
+    resizeCanvas();
+    if (reducedMotion.matches) {
+      render(0);
+    }
   };
 
   resizeCanvas();
-  animationFrame = window.requestAnimationFrame(render);
 
-  window.addEventListener("resize", resizeCanvas);
+  if (reducedMotion.matches) {
+    render(0);
+  } else {
+    animationFrame = window.requestAnimationFrame(render);
+  }
+
+  window.addEventListener("resize", handleResize);
 
   return () => {
     running = false;
     window.cancelAnimationFrame(animationFrame);
-    window.removeEventListener("resize", resizeCanvas);
+    window.removeEventListener("resize", handleResize);
   };
 };
 
+const cleanupHeroStageMotion = setupHeroStageMotion();
 const cleanupChipNetwork = setupChipNetworkCanvas();
 
 syncHeaderState();
 
 window.addEventListener("scroll", () => {
   syncHeaderState();
+}, { passive: true });
+window.addEventListener("beforeunload", () => {
+  cleanupHeroStageMotion();
+  cleanupChipNetwork();
 });
-window.addEventListener("beforeunload", cleanupChipNetwork);
