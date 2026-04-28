@@ -58,7 +58,9 @@
         <div class="hero-visual" aria-hidden="true">
           <div class="hero-stage">
             <div class="hero-glow"></div>
-            <div class="hero-chip-anchor" data-chip-anchor="hero"></div>
+            <div class="globe-shell">
+              <canvas id="globe-canvas" class="globe-canvas"></canvas>
+            </div>
           </div>
 
           <div class="signal-log">
@@ -67,6 +69,14 @@
             <span>Replacement device dispatched</span>
             <span>Vendor escalation in progress</span>
           </div>
+        </div>
+      </section>
+
+      <section class="radar-band" aria-label="Operational radar">
+        <div class="radar-anchor" data-chip-anchor="radar" aria-hidden="true"></div>
+        <div class="radar-band-copy" data-reveal>
+          <p class="eyebrow">Live Operations View</p>
+          <h2>Radar for every moving request.</h2>
         </div>
       </section>
 
@@ -268,6 +278,7 @@
       <span>Structured support for modern IT operations.</span>
     </footer>
 
+    <script src="vendor/motion.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
