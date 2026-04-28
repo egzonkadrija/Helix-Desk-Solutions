@@ -17,8 +17,8 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="chip-network-layer" aria-hidden="true">
-      <canvas id="chip-network-canvas"></canvas>
+    <div class="globe-link-layer" aria-hidden="true">
+      <canvas id="globe-link-canvas"></canvas>
     </div>
 
     <header class="topbar">
@@ -72,15 +72,15 @@
         </div>
       </section>
 
-      <section class="radar-band" aria-label="Operational radar">
-        <div class="radar-anchor" data-chip-anchor="radar" aria-hidden="true"></div>
-        <div class="radar-band-copy" data-reveal>
-          <p class="eyebrow">Live Operations View</p>
-          <h2>Radar for every moving request.</h2>
-        </div>
-      </section>
-
       <section class="metrics" aria-label="Performance indicators">
+        <span
+          class="continent-marker continent-marker-north-america"
+          data-continent-anchor="north-america"
+          data-reveal
+        >
+          <img class="continent-map" src="assets/north-america.svg" alt="" />
+          <span class="continent-label">North America</span>
+        </span>
         <div data-reveal>
           <strong>11 min</strong>
           <span>median human response target</span>
@@ -105,12 +105,13 @@
               with the right context.
             </p>
           </div>
-
-          <div class="chip-module chip-module-services" data-reveal aria-hidden="true">
-            <div class="chip-module-anchor" data-chip-anchor="services"></div>
-            <p>INPUT BUS</p>
-            <strong>Request intake</strong>
-            <span>Channel capture and technical routing.</span>
+          <div
+            class="continent-marker continent-marker-south-america"
+            data-continent-anchor="south-america"
+            data-reveal
+          >
+            <img class="continent-map" src="assets/south-america.svg" alt="" />
+            <span class="continent-label">South America</span>
           </div>
         </div>
 
@@ -160,12 +161,13 @@
               with discipline.
             </p>
           </div>
-
-          <div class="chip-module chip-module-workflow" data-reveal aria-hidden="true">
-            <div class="chip-module-anchor" data-chip-anchor="workflow"></div>
-            <p>CONTROL BUS</p>
-            <strong>Incident flow</strong>
-            <span>Prioritization, ownership, and handoff control.</span>
+          <div
+            class="continent-marker continent-marker-europe"
+            data-continent-anchor="europe"
+            data-reveal
+          >
+            <img class="continent-map" src="assets/europe.svg" alt="" />
+            <span class="continent-label">Europe</span>
           </div>
         </div>
 
@@ -214,15 +216,17 @@
             <h2>Built for internal IT operations.</h2>
             <p>
               HELIX supports office teams, hybrid workforces, remote endpoints,
-              shared devices, and vendor-dependent operations.
+              shared devices, vendor-dependent operations, and employee requests
+              in German and English.
             </p>
           </div>
-
-          <div class="chip-module chip-module-coverage" data-reveal aria-hidden="true">
-            <div class="chip-module-anchor" data-chip-anchor="coverage"></div>
-            <p>SERVICE BUS</p>
-            <strong>Coverage matrix</strong>
-            <span>Identity, endpoints, collaboration, and routing.</span>
+          <div
+            class="continent-marker continent-marker-africa"
+            data-continent-anchor="africa"
+            data-reveal
+          >
+            <img class="continent-map" src="assets/africa.svg" alt="" />
+            <span class="continent-label">Africa</span>
           </div>
         </div>
 
@@ -243,6 +247,10 @@
             <h3>Operational routing</h3>
             <p>Site issues, vendors, telecom, facilities, and local support.</p>
           </div>
+          <div class="coverage-item" data-reveal>
+            <h3>German and English support</h3>
+            <p>Bilingual intake and employee-facing communication for daily requests.</p>
+          </div>
         </div>
       </section>
 
@@ -257,11 +265,13 @@
         </div>
 
         <div class="contact-side">
-          <div class="chip-module chip-module-contact" data-reveal aria-hidden="true">
-            <div class="chip-module-anchor" data-chip-anchor="contact"></div>
-            <p>TERMINAL BUS</p>
-            <strong>Start connection</strong>
-            <span>Commercial contact and transition setup.</span>
+          <div
+            class="continent-marker continent-marker-asia"
+            data-continent-anchor="asia"
+            data-reveal
+          >
+            <img class="continent-map" src="assets/asia.svg" alt="" />
+            <span class="continent-label">Asia</span>
           </div>
 
           <div class="contact-links" data-reveal>
@@ -279,6 +289,7 @@
     </footer>
 
     <script src="vendor/motion.js"></script>
+    <script src="data/globe-land.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

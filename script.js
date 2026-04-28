@@ -1,9 +1,12 @@
 const topbar = document.querySelector(".topbar");
 const reveals = document.querySelectorAll("[data-reveal]");
 const workflowSteps = document.querySelectorAll("[data-step]");
-const chipCanvas = document.querySelector("#chip-network-canvas");
+const globeLinkCanvas = document.querySelector("#globe-link-canvas");
 const globeCanvas = document.querySelector("#globe-canvas");
-const chipAnchors = Array.from(document.querySelectorAll("[data-chip-anchor]"));
+const globeShell = document.querySelector(".globe-shell");
+const continentAnchors = Array.from(
+  document.querySelectorAll("[data-continent-anchor]")
+);
 const heroStage = document.querySelector(".hero-stage");
 const motionLibrary = window.Motion;
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -177,67 +180,12 @@ workflowSteps.forEach((step) => workflowObserver.observe(step));
 const setupHeroStageMotion = () => {
   if (!heroStage) return () => {};
 
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
-  const target = { x: 0, y: 0 };
-  const current = { x: 0, y: 0 };
-  let animationFrame = 0;
-  let running = true;
+  heroStage.style.setProperty("--stage-x", "0px");
+  heroStage.style.setProperty("--stage-y", "0px");
+  heroStage.style.setProperty("--tilt-x", "0deg");
+  heroStage.style.setProperty("--tilt-y", "0deg");
 
-  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
-  if (reducedMotion.matches) {
-    heroStage.style.setProperty("--stage-x", "0px");
-    heroStage.style.setProperty("--stage-y", "0px");
-    heroStage.style.setProperty("--tilt-x", "0deg");
-    heroStage.style.setProperty("--tilt-y", "0deg");
-    return () => {};
-  }
-
-  const applyMotion = (time) => {
-    if (!running) return;
-
-    current.x += (target.x - current.x) * 0.08;
-    current.y += (target.y - current.y) * 0.08;
-
-    const drift = Math.sin(time * 0.0011) * 3;
-    heroStage.style.setProperty("--stage-x", `${(current.x * 8).toFixed(2)}px`);
-    heroStage.style.setProperty(
-      "--stage-y",
-      `${(current.y * 6 + drift).toFixed(2)}px`
-    );
-    heroStage.style.setProperty("--tilt-x", `${(-current.y * 4).toFixed(2)}deg`);
-    heroStage.style.setProperty("--tilt-y", `${(current.x * 5).toFixed(2)}deg`);
-
-    animationFrame = window.requestAnimationFrame(applyMotion);
-  };
-
-  const handlePointerMove = (event) => {
-    if (!finePointer.matches || reducedMotion.matches) return;
-
-    const rect = heroStage.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    target.x = clamp((event.clientX - centerX) / (rect.width / 2), -1, 1);
-    target.y = clamp((event.clientY - centerY) / (rect.height / 2), -1, 1);
-  };
-
-  const resetTarget = () => {
-    target.x = 0;
-    target.y = 0;
-  };
-
-  animationFrame = window.requestAnimationFrame(applyMotion);
-  heroStage.addEventListener("pointermove", handlePointerMove);
-  heroStage.addEventListener("pointerleave", resetTarget);
-
-  return () => {
-    running = false;
-    window.cancelAnimationFrame(animationFrame);
-    heroStage.removeEventListener("pointermove", handlePointerMove);
-    heroStage.removeEventListener("pointerleave", resetTarget);
-  };
+  return () => {};
 };
 
 const setupGlobeCanvas = () => {
@@ -254,83 +202,35 @@ const setupGlobeCanvas = () => {
     [[41.9, 12.5], [-33.9, 151.2]],
     [[37.8, -122.4], [52.5, 13.4]],
   ];
-  const landMasses = [
-    [
-      [72, -166],
-      [69, -136],
-      [62, -122],
-      [58, -106],
-      [52, -95],
-      [50, -70],
-      [42, -64],
-      [31, -80],
-      [24, -82],
-      [18, -96],
-      [24, -112],
-      [32, -117],
-      [40, -126],
-      [54, -137],
-      [60, -152],
-    ],
-    [
-      [78, -58],
-      [74, -22],
-      [62, -34],
-      [60, -51],
-      [68, -66],
-    ],
-    [
-      [12, -81],
-      [9, -66],
-      [-4, -52],
-      [-18, -38],
-      [-34, -48],
-      [-55, -68],
-      [-42, -74],
-      [-20, -70],
-      [-6, -78],
-    ],
-    [
-      [61, -10],
-      [54, 12],
-      [45, 32],
-      [31, 32],
-      [20, 10],
-      [5, -4],
-      [-17, 12],
-      [-35, 18],
-      [-34, 4],
-      [-18, -16],
-      [5, -17],
-      [31, -10],
-      [42, -5],
-    ],
-    [
-      [66, 38],
-      [60, 80],
-      [55, 118],
-      [42, 142],
-      [24, 122],
-      [8, 100],
-      [18, 78],
-      [30, 58],
-      [45, 45],
-    ],
-    [
-      [8, 95],
-      [-6, 116],
-      [-10, 135],
-      [4, 126],
-      [15, 112],
-    ],
-    [
-      [-12, 112],
-      [-16, 148],
-      [-35, 154],
-      [-43, 124],
-      [-26, 112],
-    ],
-  ];
+  const globeLand = Array.isArray(window.HELIX_GLOBE_LAND)
+    ? window.HELIX_GLOBE_LAND
+    : [];
+  const continentLandColors = {
+    "North America": {
+      fill: "rgba(255, 191, 122, 0.09)",
+      stroke: "rgba(255, 191, 122, 0.18)",
+    },
+    "South America": {
+      fill: "rgba(120, 221, 196, 0.095)",
+      stroke: "rgba(159, 244, 215, 0.16)",
+    },
+    Europe: {
+      fill: "rgba(104, 165, 244, 0.085)",
+      stroke: "rgba(168, 205, 255, 0.15)",
+    },
+    Africa: {
+      fill: "rgba(120, 221, 196, 0.09)",
+      stroke: "rgba(159, 244, 215, 0.15)",
+    },
+    Asia: {
+      fill: "rgba(104, 165, 244, 0.085)",
+      stroke: "rgba(168, 205, 255, 0.14)",
+    },
+    Oceania: {
+      fill: "rgba(255, 191, 122, 0.075)",
+      stroke: "rgba(255, 191, 122, 0.13)",
+    },
+  };
 
   let size = 0;
   let center = 0;
@@ -407,25 +307,6 @@ const setupGlobeCanvas = () => {
     };
   };
 
-  const interpolateShape = (shape) => {
-    const points = [];
-
-    shape.forEach((point, index) => {
-      const next = shape[(index + 1) % shape.length];
-      points.push(point);
-
-      for (let step = 1; step < 4; step += 1) {
-        const progress = step / 4;
-        points.push([
-          point[0] + (next[0] - point[0]) * progress,
-          point[1] + (next[1] - point[1]) * progress,
-        ]);
-      }
-    });
-
-    return points;
-  };
-
   const drawProjectedLine = (points, time, color, lineWidth) => {
     let drawing = false;
 
@@ -471,41 +352,56 @@ const setupGlobeCanvas = () => {
   };
 
   const drawLandMasses = (time) => {
+    if (!globeLand.length) return;
+
     context.save();
     context.beginPath();
     context.arc(center, center, radius * 0.99, 0, Math.PI * 2);
     context.clip();
+    context.lineJoin = "round";
+    context.lineCap = "round";
 
-    landMasses.forEach((shape, index) => {
-      const projected = interpolateShape(shape).map((point) =>
-        projectPoint(pointFromLatLon(point), time)
-      );
-      const visiblePoints = projected.filter((point) => point.visible);
+    globeLand.forEach((country) => {
+      const colors = continentLandColors[country.c] || continentLandColors.Africa;
 
-      if (visiblePoints.length < 3) return;
+      country.r.forEach((ring) => {
+        let drawing = false;
+        let visiblePoints = 0;
 
-      context.beginPath();
-      visiblePoints.forEach((point, pointIndex) => {
-        if (pointIndex === 0) {
-          context.moveTo(point.x, point.y);
-          return;
+        context.beginPath();
+        ring.forEach((coordinate) => {
+          const projected = projectPoint(pointFromLatLon(coordinate), time);
+
+          if (!projected.visible) {
+            if (drawing) {
+              context.closePath();
+              drawing = false;
+            }
+            return;
+          }
+
+          visiblePoints += 1;
+
+          if (!drawing) {
+            context.moveTo(projected.x, projected.y);
+            drawing = true;
+          } else {
+            context.lineTo(projected.x, projected.y);
+          }
+        });
+
+        if (drawing) {
+          context.closePath();
         }
 
-        context.lineTo(point.x, point.y);
-      });
-      context.closePath();
+        if (visiblePoints < 3) return;
 
-      context.fillStyle =
-        index % 2 === 0
-          ? "rgba(120, 221, 196, 0.105)"
-          : "rgba(255, 191, 122, 0.07)";
-      context.strokeStyle =
-        index % 2 === 0
-          ? "rgba(159, 244, 215, 0.16)"
-          : "rgba(255, 191, 122, 0.12)";
-      context.lineWidth = 0.75;
-      context.fill();
-      context.stroke();
+        context.fillStyle = colors.fill;
+        context.strokeStyle = colors.stroke;
+        context.lineWidth = 0.42;
+        context.fill();
+        context.stroke();
+      });
     });
 
     context.restore();
@@ -556,8 +452,8 @@ const setupGlobeCanvas = () => {
     context.fill();
 
     context.save();
-    context.globalCompositeOperation = "lighter";
     drawLandMasses(time);
+    context.globalCompositeOperation = "lighter";
     drawGlobeGrid(time);
     routes.forEach((route, index) => drawRoute(route[0], route[1], index, time));
     context.restore();
@@ -612,73 +508,81 @@ const setupGlobeCanvas = () => {
   };
 };
 
-const setupChipNetworkCanvas = () => {
-  if (!chipCanvas || !chipAnchors.length) return () => {};
+const setupGlobeLinkCanvas = () => {
+  if (!globeLinkCanvas || !continentAnchors.length || !globeShell) {
+    return () => {};
+  }
 
-  const context = chipCanvas.getContext("2d");
+  const context = globeLinkCanvas.getContext("2d");
   if (!context) return () => {};
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const continentColors = {
+    "north-america": "255, 191, 122",
+    "south-america": "159, 244, 215",
+    europe: "168, 205, 255",
+    africa: "159, 244, 215",
+    asia: "168, 205, 255",
+  };
+
   let width = 0;
   let height = 0;
   let animationFrame = 0;
   let running = true;
 
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-  const fullCircle = Math.PI * 2;
-  const radarBlips = [
-    { angle: -2.42, distance: 0.37, strength: 0.7 },
-    { angle: -1.66, distance: 0.62, strength: 0.95 },
-    { angle: -0.92, distance: 0.46, strength: 0.82 },
-    { angle: -0.18, distance: 0.76, strength: 0.68 },
-    { angle: 0.58, distance: 0.32, strength: 0.88 },
-    { angle: 1.18, distance: 0.57, strength: 0.78 },
-    { angle: 2.02, distance: 0.68, strength: 0.92 },
-    { angle: 2.72, distance: 0.49, strength: 0.74 },
-  ];
-
-  const normalizeAngle = (angle) =>
-    ((angle % fullCircle) + fullCircle) % fullCircle;
-
-  const getScanReveal = (scanAngle, blipAngle) => {
-    const trailDistance = normalizeAngle(scanAngle - blipAngle);
-
-    return trailDistance > 0.58 ? 0 : 1 - trailDistance / 0.58;
-  };
 
   const resizeCanvas = () => {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     width = window.innerWidth;
     height = window.innerHeight;
 
-    chipCanvas.width = Math.floor(width * ratio);
-    chipCanvas.height = Math.floor(height * ratio);
+    globeLinkCanvas.width = Math.floor(width * ratio);
+    globeLinkCanvas.height = Math.floor(height * ratio);
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
   };
 
+  const getGlobeSource = () => {
+    const rect = globeShell.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const isNearViewport = y > -height * 0.28 && y < height * 1.18;
+
+    return {
+      x: clamp(x, width * 0.08, width * 0.92),
+      y: isNearViewport ? y : y < 0 ? -70 : height + 70,
+    };
+  };
+
   const getAnchorMetrics = () =>
-    chipAnchors
+    continentAnchors
       .map((anchor) => {
         const rect = anchor.getBoundingClientRect();
+        const mapRect =
+          anchor.querySelector(".continent-map")?.getBoundingClientRect() ||
+          rect;
+        const x = mapRect.left + mapRect.width / 2;
+        const y = mapRect.top + mapRect.height / 2;
 
         return {
-          name: anchor.dataset.chipAnchor || "",
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2,
-          absY: rect.top + window.scrollY + rect.height / 2,
+          name: anchor.dataset.continentAnchor || "",
+          x: clamp(x, 24, width - 24),
+          y,
+          drawY: clamp(y, -height * 0.18, height * 1.18),
+          absY: mapRect.top + window.scrollY + mapRect.height / 2,
         };
       })
       .sort((a, b) => a.absY - b.absY);
 
-  const drawOperationsField = (time) => {
+  const drawBaseField = (time) => {
     context.save();
-    context.globalAlpha = 0.42;
+    context.globalAlpha = 0.32;
 
-    const gridSize = 112;
-    const drift = reducedMotion.matches ? 0 : (time * 0.012) % gridSize;
+    const gridSize = 128;
+    const drift = reducedMotion.matches ? 0 : (time * 0.008) % gridSize;
 
     for (let x = -gridSize + drift; x < width + gridSize; x += gridSize) {
-      context.strokeStyle = "rgba(198, 211, 214, 0.018)";
+      context.strokeStyle = "rgba(198, 211, 214, 0.014)";
       context.lineWidth = 1;
       context.beginPath();
       context.moveTo(x, 0);
@@ -686,8 +590,8 @@ const setupChipNetworkCanvas = () => {
       context.stroke();
     }
 
-    for (let y = -gridSize + drift * 0.65; y < height + gridSize; y += gridSize) {
-      context.strokeStyle = "rgba(198, 211, 214, 0.014)";
+    for (let y = -gridSize + drift * 0.5; y < height + gridSize; y += gridSize) {
+      context.strokeStyle = "rgba(198, 211, 214, 0.012)";
       context.lineWidth = 1;
       context.beginPath();
       context.moveTo(0, y);
@@ -698,141 +602,65 @@ const setupChipNetworkCanvas = () => {
     context.restore();
   };
 
-  const drawRadarRings = (anchor, time) => {
-    const baseRadius = clamp(Math.min(width, height) * 0.2, 130, 260);
-    const scanAngle = reducedMotion.matches
-      ? -Math.PI * 0.28
-      : (time * 0.00055) % fullCircle;
-    const rings = [0.34, 0.55, 0.78, 1];
-
-    context.save();
-    context.translate(anchor.x, anchor.y);
-    context.scale(1, 0.74);
-    context.globalCompositeOperation = "lighter";
-
-    rings.forEach((size, index) => {
-      const radius = baseRadius * size;
-
-      context.strokeStyle =
-        index === rings.length - 1
-          ? "rgba(159, 244, 215, 0.26)"
-          : "rgba(198, 211, 214, 0.13)";
-      context.lineWidth = index === rings.length - 1 ? 1.4 : 1;
-      context.beginPath();
-      context.arc(0, 0, radius, 0, Math.PI * 2);
-      context.stroke();
-    });
-
-    for (let spoke = 0; spoke < 8; spoke += 1) {
-      const angle = (fullCircle * spoke) / 8;
-      const inner = baseRadius * 0.18;
-      const outer = baseRadius;
-
-      context.strokeStyle = "rgba(198, 211, 214, 0.06)";
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
-      context.lineTo(Math.cos(angle) * outer, Math.sin(angle) * outer);
-      context.stroke();
-    }
-
-    radarBlips.forEach((blip, index) => {
-      const x = Math.cos(blip.angle) * baseRadius * blip.distance;
-      const y = Math.sin(blip.angle) * baseRadius * blip.distance;
-      const reveal = getScanReveal(scanAngle, normalizeAngle(blip.angle));
-      const coreAlpha = 0.16 + reveal * 0.76 * blip.strength;
-      const glowRadius = 8 + reveal * 24 * blip.strength;
-      const dotRadius = 2.1 + reveal * 2.4 * blip.strength;
-
-      if (reveal > 0.02) {
-        const glow = context.createRadialGradient(x, y, 0, x, y, glowRadius);
-        glow.addColorStop(0, `rgba(240, 255, 250, ${0.42 * reveal})`);
-        glow.addColorStop(0.28, `rgba(159, 244, 215, ${0.28 * reveal})`);
-        glow.addColorStop(1, "rgba(159, 244, 215, 0)");
-
-        context.fillStyle = glow;
-        context.beginPath();
-        context.arc(x, y, glowRadius, 0, fullCircle);
-        context.fill();
-      }
-
-      context.fillStyle =
-        index % 3 === 0
-          ? `rgba(255, 191, 122, ${coreAlpha * 0.82})`
-          : `rgba(159, 244, 215, ${coreAlpha})`;
-      context.beginPath();
-      context.arc(x, y, dotRadius, 0, fullCircle);
-      context.fill();
-    });
-
-    for (let wedge = 0; wedge < 10; wedge += 1) {
-      const widthAngle = 0.038 + wedge * 0.004;
-      const alpha = (10 - wedge) / 10;
-
-      context.fillStyle = `rgba(159, 244, 215, ${0.035 * alpha})`;
-      context.beginPath();
-      context.moveTo(0, 0);
-      context.arc(
-        0,
-        0,
-        baseRadius,
-        scanAngle - wedge * 0.055,
-        scanAngle + widthAngle
-      );
-      context.closePath();
-      context.fill();
-    }
-
-    context.strokeStyle = "rgba(159, 244, 215, 0.42)";
-    context.lineWidth = 1.3;
-    context.beginPath();
-    context.moveTo(0, 0);
-    context.lineTo(
-      Math.cos(scanAngle) * baseRadius,
-      Math.sin(scanAngle) * baseRadius
-    );
-    context.stroke();
-
-    context.restore();
-  };
-
-  const drawSignalArc = (start, end, active, index, time) => {
-    const bend = index % 2 === 0 ? -72 : 72;
-    const control = {
-      x: start.x + (end.x - start.x) * 0.5 + bend,
-      y: start.y + (end.y - start.y) * 0.28,
+  const drawConnector = (source, target, active, index, time) => {
+    const color = continentColors[target.name] || "159, 244, 215";
+    const targetY = target.drawY;
+    const isOffscreen = target.y !== targetY;
+    const baseAlpha = isOffscreen ? 0.11 : 0.17;
+    const activeAlpha = isOffscreen ? 0.22 : 0.34;
+    const verticalDistance = Math.abs(targetY - source.y);
+    const horizontalDirection = target.x >= source.x ? 1 : -1;
+    const controlA = {
+      x: source.x + (target.x - source.x) * 0.24,
+      y: source.y + Math.min(verticalDistance * 0.22, 140),
     };
+    const controlB = {
+      x: target.x - horizontalDirection * clamp(width * 0.12, 90, 190),
+      y: targetY - Math.min(verticalDistance * 0.18, 160),
+    };
+    const estimatedLength = Math.hypot(target.x - source.x, targetY - source.y);
+    const traceOffset = reducedMotion.matches
+      ? 0
+      : -((time * 0.12 + index * 84) % (estimatedLength + 160));
 
     context.save();
     context.lineCap = "round";
-    context.lineWidth = active ? 1.5 : 1;
-    context.setLineDash(active ? [4, 13] : [2, 16]);
-    context.strokeStyle = active
-      ? "rgba(159, 244, 215, 0.26)"
-      : "rgba(104, 165, 244, 0.12)";
+    context.lineJoin = "round";
 
+    context.strokeStyle = `rgba(${color}, ${active ? activeAlpha : baseAlpha})`;
+    context.lineWidth = active ? 1.45 : 1;
+    context.setLineDash(active ? [3, 12] : [2, 18]);
+    context.lineDashOffset = reducedMotion.matches ? 0 : -time * 0.025;
     context.beginPath();
-    context.moveTo(start.x, start.y);
-    context.quadraticCurveTo(control.x, control.y, end.x, end.y);
+    context.moveTo(source.x, source.y);
+    context.bezierCurveTo(
+      controlA.x,
+      controlA.y,
+      controlB.x,
+      controlB.y,
+      target.x,
+      targetY
+    );
     context.stroke();
-    context.restore();
-  };
 
-  const drawSignalLock = (anchor, active, index, time) => {
-    const pulse = reducedMotion.matches
-      ? 0.45
-      : (time * 0.001 + index * 0.2) % 1;
-    const radius = active ? 10 + pulse * 36 : 8 + pulse * 20;
-    const alpha = active ? 0.32 * (1 - pulse) : 0.16 * (1 - pulse);
-
-    context.save();
-    context.globalCompositeOperation = "lighter";
-
-    context.strokeStyle = `rgba(159, 244, 215, ${alpha})`;
-    context.lineWidth = active ? 1.4 : 1;
-    context.beginPath();
-    context.arc(anchor.x, anchor.y, radius, 0, Math.PI * 2);
-    context.stroke();
+    if (!reducedMotion.matches) {
+      context.globalCompositeOperation = "lighter";
+      context.strokeStyle = `rgba(${color}, ${active ? 0.52 : 0.26})`;
+      context.lineWidth = active ? 2 : 1.4;
+      context.setLineDash([72, estimatedLength + 120]);
+      context.lineDashOffset = traceOffset;
+      context.beginPath();
+      context.moveTo(source.x, source.y);
+      context.bezierCurveTo(
+        controlA.x,
+        controlA.y,
+        controlB.x,
+        controlB.y,
+        target.x,
+        targetY
+      );
+      context.stroke();
+    }
 
     context.restore();
   };
@@ -841,20 +669,11 @@ const setupChipNetworkCanvas = () => {
     if (!running) return;
 
     context.clearRect(0, 0, width, height);
-    drawOperationsField(time);
+    drawBaseField(time);
 
+    const source = getGlobeSource();
     const anchors = getAnchorMetrics();
-    const radarAnchor = anchors.find((anchor) => anchor.name === "radar");
-
-    if (!radarAnchor) {
-      if (!reducedMotion.matches) {
-        animationFrame = window.requestAnimationFrame(render);
-      }
-      return;
-    }
-
-    const sectionAnchors = anchors.filter((anchor) => anchor.name !== "radar");
-    const activeAnchor = sectionAnchors.reduce((nearest, anchor) => {
+    const activeAnchor = anchors.reduce((nearest, anchor) => {
       if (!nearest) return anchor;
 
       return Math.abs(anchor.y - height * 0.48) <
@@ -863,16 +682,8 @@ const setupChipNetworkCanvas = () => {
         : nearest;
     }, null);
 
-    drawRadarRings(radarAnchor, time);
-
-    sectionAnchors.forEach((anchor, index) => {
-      const isActive = activeAnchor?.name === anchor.name;
-      const target = { x: anchor.x + 18, y: anchor.y };
-
-      if (target.y > -120 && target.y < height + 120) {
-        drawSignalArc(radarAnchor, target, isActive, index, time);
-        drawSignalLock(anchor, isActive, index, time);
-      }
+    anchors.forEach((anchor, index) => {
+      drawConnector(source, anchor, activeAnchor?.name === anchor.name, index, time);
     });
 
     if (!reducedMotion.matches) {
@@ -882,6 +693,11 @@ const setupChipNetworkCanvas = () => {
 
   const handleResize = () => {
     resizeCanvas();
+    if (reducedMotion.matches) {
+      render(0);
+    }
+  };
+  const handleScroll = () => {
     if (reducedMotion.matches) {
       render(0);
     }
@@ -896,18 +712,20 @@ const setupChipNetworkCanvas = () => {
   }
 
   window.addEventListener("resize", handleResize);
+  window.addEventListener("scroll", handleScroll, { passive: true });
 
   return () => {
     running = false;
     window.cancelAnimationFrame(animationFrame);
     window.removeEventListener("resize", handleResize);
+    window.removeEventListener("scroll", handleScroll);
   };
 };
 
 const cleanupPageTransitions = setupMotionPageTransitions();
 const cleanupHeroStageMotion = setupHeroStageMotion();
 const cleanupGlobe = setupGlobeCanvas();
-const cleanupChipNetwork = setupChipNetworkCanvas();
+const cleanupGlobeLinks = setupGlobeLinkCanvas();
 
 syncHeaderState();
 
@@ -918,5 +736,5 @@ window.addEventListener("beforeunload", () => {
   cleanupPageTransitions();
   cleanupHeroStageMotion();
   cleanupGlobe();
-  cleanupChipNetwork();
+  cleanupGlobeLinks();
 });
