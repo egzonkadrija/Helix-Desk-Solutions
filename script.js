@@ -532,10 +532,13 @@ const setupGlobeLinkCanvas = () => {
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
     const isNearViewport = y > -height * 0.28 && y < height * 1.18;
+    const drawY = isNearViewport ? y : y < 0 ? -70 : height + 70;
 
     return {
+      name: "hero",
       x: clamp(x, width * 0.08, width * 0.92),
-      y: isNearViewport ? y : y < 0 ? -70 : height + 70,
+      y,
+      drawY,
     };
   };
 
@@ -589,21 +592,23 @@ const setupGlobeLinkCanvas = () => {
 
   const drawConnector = (source, target, active, index, time) => {
     const color = continentColors[target.name] || "159, 244, 215";
+    const sourceY = source.drawY ?? source.y;
     const targetY = target.drawY;
-    const isOffscreen = target.y !== targetY;
+    const isOffscreen = source.y !== sourceY || target.y !== targetY;
     const baseAlpha = isOffscreen ? 0.11 : 0.17;
     const activeAlpha = isOffscreen ? 0.22 : 0.34;
-    const verticalDistance = Math.abs(targetY - source.y);
+    const verticalDistance = Math.abs(targetY - sourceY);
+    const verticalDirection = targetY >= sourceY ? 1 : -1;
     const horizontalDirection = target.x >= source.x ? 1 : -1;
     const controlA = {
       x: source.x + (target.x - source.x) * 0.24,
-      y: source.y + Math.min(verticalDistance * 0.22, 140),
+      y: sourceY + verticalDirection * Math.min(verticalDistance * 0.22, 140),
     };
     const controlB = {
       x: target.x - horizontalDirection * clamp(width * 0.12, 90, 190),
-      y: targetY - Math.min(verticalDistance * 0.18, 160),
+      y: targetY - verticalDirection * Math.min(verticalDistance * 0.18, 160),
     };
-    const estimatedLength = Math.hypot(target.x - source.x, targetY - source.y);
+    const estimatedLength = Math.hypot(target.x - source.x, targetY - sourceY);
     const traceOffset = reducedMotion.matches
       ? 0
       : -((time * 0.12 + index * 84) % (estimatedLength + 160));
@@ -617,7 +622,7 @@ const setupGlobeLinkCanvas = () => {
     context.setLineDash(active ? [3, 12] : [2, 18]);
     context.lineDashOffset = reducedMotion.matches ? 0 : -time * 0.025;
     context.beginPath();
-    context.moveTo(source.x, source.y);
+    context.moveTo(source.x, sourceY);
     context.bezierCurveTo(
       controlA.x,
       controlA.y,
@@ -635,7 +640,7 @@ const setupGlobeLinkCanvas = () => {
       context.setLineDash([72, estimatedLength + 120]);
       context.lineDashOffset = traceOffset;
       context.beginPath();
-      context.moveTo(source.x, source.y);
+      context.moveTo(source.x, sourceY);
       context.bezierCurveTo(
         controlA.x,
         controlA.y,
@@ -667,9 +672,17 @@ const setupGlobeLinkCanvas = () => {
         : nearest;
     }, null);
 
-    anchors.forEach((anchor, index) => {
-      drawConnector(source, anchor, activeAnchor?.name === anchor.name, index, time);
-    });
+    const chainPoints = [source, ...anchors];
+
+    for (let index = 0; index < chainPoints.length - 1; index += 1) {
+      const chainSource = chainPoints[index];
+      const chainTarget = chainPoints[index + 1];
+      const isActive =
+        activeAnchor?.name === chainSource.name ||
+        activeAnchor?.name === chainTarget.name;
+
+      drawConnector(chainSource, chainTarget, isActive, index, time);
+    }
 
     if (!reducedMotion.matches) {
       animationFrame = window.requestAnimationFrame(render);

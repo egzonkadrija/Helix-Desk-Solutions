@@ -124,11 +124,6 @@ a {
     drop-shadow(0 4px 8px rgba(0, 0, 0, 0.42));
 }
 
-.chip-board {
-  stroke: rgba(159, 244, 215, 0.18);
-  stroke-width: 1;
-}
-
 .chip-trace {
   fill: none;
   stroke-linecap: round;
