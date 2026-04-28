@@ -440,7 +440,7 @@ const setupGlobeCanvas = () => {
       center,
       radius * 1.16
     );
-    shell.addColorStop(0, "rgba(240, 255, 250, 0.16)");
+    shell.addColorStop(0, "rgba(79, 149, 151, 0.1)");
     shell.addColorStop(0.3, "rgba(79, 149, 151, 0.18)");
     shell.addColorStop(0.58, "rgba(8, 38, 43, 0.86)");
     shell.addColorStop(0.82, "rgba(2, 8, 10, 0.94)");
@@ -463,21 +463,6 @@ const setupGlobeCanvas = () => {
     context.beginPath();
     context.arc(center, center, radius, 0, Math.PI * 2);
     context.stroke();
-
-    const highlight = context.createRadialGradient(
-      center - radius * 0.35,
-      center - radius * 0.38,
-      0,
-      center - radius * 0.35,
-      center - radius * 0.38,
-      radius * 0.54
-    );
-    highlight.addColorStop(0, "rgba(255, 255, 255, 0.18)");
-    highlight.addColorStop(1, "rgba(255, 255, 255, 0)");
-    context.fillStyle = highlight;
-    context.beginPath();
-    context.arc(center, center, radius, 0, Math.PI * 2);
-    context.fill();
 
     if (!reducedMotion.matches) {
       animationFrame = window.requestAnimationFrame(render);
