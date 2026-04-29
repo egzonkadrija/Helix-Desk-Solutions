@@ -627,7 +627,10 @@ main > .section {
 
 .metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(260px, 0.95fr);
+  grid-template-columns:
+    minmax(280px, 1.18fr)
+    repeat(3, minmax(0, 0.62fr))
+    minmax(230px, 0.82fr);
   gap: clamp(1rem, 3vw, 2rem);
   align-items: center;
   align-content: center;
@@ -636,16 +639,42 @@ main > .section {
   border-bottom: 1px solid rgba(224, 220, 210, 0.1);
 }
 
-.metrics div {
+.metrics-intro {
+  max-width: 34rem;
+}
+
+.metrics-intro .eyebrow {
+  margin-bottom: 0.7rem;
+}
+
+.metrics-intro h2 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  font-size: clamp(2rem, 3.4vw, 3.25rem);
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: 0;
+}
+
+.metrics-intro p:last-child {
+  max-width: 31rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.metric-item {
   padding: 1.05rem 1.15rem 1.05rem 0;
   border-right: 1px solid rgba(224, 220, 210, 0.1);
 }
 
-.metrics div:nth-of-type(3) {
+.metric-item:last-of-type {
   border-right: 0;
 }
 
-.metrics strong {
+.metric-item strong {
   display: block;
   margin-bottom: 0.3rem;
   color: var(--text);
@@ -654,7 +683,7 @@ main > .section {
   font-weight: 600;
 }
 
-.metrics span {
+.metric-item span {
   color: var(--muted);
   line-height: 1.6;
 }
@@ -710,7 +739,7 @@ main > .section {
 }
 
 .metrics .continent-marker {
-  grid-column: 4;
+  grid-column: 5;
   grid-row: 1;
   justify-self: end;
   width: min(100%, clamp(14.5rem, 22vw, 20rem));
@@ -1348,6 +1377,15 @@ body.motion-ready [data-reveal] {
     align-items: start;
   }
 
+  .metrics-intro {
+    grid-column: 1 / -1;
+    max-width: 38rem;
+  }
+
+  .metrics-intro h2 {
+    max-width: 14ch;
+  }
+
   .metrics .continent-marker {
     grid-column: 1 / -1;
     grid-row: auto;
@@ -1396,7 +1434,15 @@ body.motion-ready [data-reveal] {
     grid-template-columns: 1fr 1fr;
   }
 
+  .metrics-intro {
+    grid-column: 1 / -1;
+  }
+
   .metrics .continent-marker {
+    grid-column: 1 / -1;
+  }
+
+  .metric-item:last-of-type {
     grid-column: 1 / -1;
   }
 }
@@ -1497,6 +1543,14 @@ body.motion-ready [data-reveal] {
     grid-template-columns: 1fr;
   }
 
+  .metrics-intro {
+    grid-column: auto;
+  }
+
+  .metrics-intro h2 {
+    max-width: 12ch;
+  }
+
   .metrics .continent-marker {
     position: static;
     grid-column: auto;
@@ -1509,13 +1563,14 @@ body.motion-ready [data-reveal] {
     font-size: 0.74rem;
   }
 
-  .metrics div {
+  .metric-item {
     padding: 0.95rem 0;
     border-right: 0;
     border-bottom: 1px solid rgba(224, 220, 210, 0.1);
   }
 
-  .metrics div:last-child {
+  .metric-item:last-of-type {
+    grid-column: auto;
     border-bottom: 0;
   }
 
