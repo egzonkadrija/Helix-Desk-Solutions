@@ -8,12 +8,26 @@ const continentAnchors = Array.from(
   document.querySelectorAll("[data-continent-anchor]")
 );
 const heroStage = document.querySelector(".hero-stage");
+const scrollTopButton = document.querySelector(".scroll-top-button");
 const motionLibrary = window.Motion;
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const syncHeaderState = () => {
   if (!topbar) return;
   topbar.classList.toggle("is-scrolled", window.scrollY > 18);
+};
+
+const syncScrollTopState = () => {
+  if (!scrollTopButton) return;
+  const isVisible = window.scrollY > 520;
+  scrollTopButton.classList.toggle("is-visible", isVisible);
+  scrollTopButton.setAttribute("aria-hidden", String(!isVisible));
+
+  if (isVisible) {
+    scrollTopButton.removeAttribute("tabindex");
+  } else {
+    scrollTopButton.setAttribute("tabindex", "-1");
+  }
 };
 
 const setupFallbackReveals = () => {
@@ -111,7 +125,9 @@ const setupMotionPageTransitions = () => {
 
   if (motion.hover) {
     document
-      .querySelectorAll(".button, .header-cta, .contact-links a")
+      .querySelectorAll(
+        ".button, .header-cta, .contact-links a, .scroll-top-button"
+      )
       .forEach((item) => {
         cleanups.push(
           motion.hover(item, () => {
@@ -134,25 +150,27 @@ const setupMotionPageTransitions = () => {
   }
 
   if (motion.press) {
-    document.querySelectorAll(".button, .header-cta").forEach((item) => {
-      cleanups.push(
-        motion.press(item, () => {
-          motion.animate(
-            item,
-            { scale: 0.985 },
-            { duration: 0.12, ease: "easeOut" }
-          );
-
-          return () => {
+    document
+      .querySelectorAll(".button, .header-cta, .scroll-top-button")
+      .forEach((item) => {
+        cleanups.push(
+          motion.press(item, () => {
             motion.animate(
               item,
-              { scale: 1 },
-              { duration: 0.2, ease: "easeOut" }
+              { scale: 0.985 },
+              { duration: 0.12, ease: "easeOut" }
             );
-          };
-        })
-      );
-    });
+
+            return () => {
+              motion.animate(
+                item,
+                { scale: 1 },
+                { duration: 0.2, ease: "easeOut" }
+              );
+            };
+          })
+        );
+      });
   }
 
   return () => {
@@ -207,28 +225,34 @@ const setupGlobeCanvas = () => {
     : [];
   const continentLandColors = {
     "North America": {
-      fill: "rgba(240, 163, 91, 0.09)",
-      stroke: "rgba(240, 163, 91, 0.18)",
+      fill: "rgba(240, 163, 91, 0.2)",
+      stroke: "rgba(255, 197, 130, 0.48)",
+      glow: "rgba(240, 163, 91, 0.2)",
     },
     "South America": {
-      fill: "rgba(75, 224, 160, 0.095)",
-      stroke: "rgba(134, 247, 198, 0.16)",
+      fill: "rgba(75, 224, 160, 0.2)",
+      stroke: "rgba(134, 247, 198, 0.46)",
+      glow: "rgba(75, 224, 160, 0.2)",
     },
     Europe: {
-      fill: "rgba(126, 166, 255, 0.085)",
-      stroke: "rgba(178, 199, 255, 0.15)",
+      fill: "rgba(126, 166, 255, 0.18)",
+      stroke: "rgba(198, 212, 255, 0.44)",
+      glow: "rgba(126, 166, 255, 0.18)",
     },
     Africa: {
-      fill: "rgba(75, 224, 160, 0.09)",
-      stroke: "rgba(134, 247, 198, 0.15)",
+      fill: "rgba(75, 224, 160, 0.19)",
+      stroke: "rgba(134, 247, 198, 0.44)",
+      glow: "rgba(75, 224, 160, 0.18)",
     },
     Asia: {
-      fill: "rgba(126, 166, 255, 0.085)",
-      stroke: "rgba(178, 199, 255, 0.14)",
+      fill: "rgba(126, 166, 255, 0.18)",
+      stroke: "rgba(198, 212, 255, 0.42)",
+      glow: "rgba(126, 166, 255, 0.17)",
     },
     Oceania: {
-      fill: "rgba(240, 163, 91, 0.075)",
-      stroke: "rgba(240, 163, 91, 0.13)",
+      fill: "rgba(240, 163, 91, 0.16)",
+      stroke: "rgba(255, 197, 130, 0.36)",
+      glow: "rgba(240, 163, 91, 0.14)",
     },
   };
 
@@ -396,10 +420,13 @@ const setupGlobeCanvas = () => {
 
         if (visiblePoints < 3) return;
 
+        context.shadowBlur = 7;
+        context.shadowColor = colors.glow;
         context.fillStyle = colors.fill;
-        context.strokeStyle = colors.stroke;
-        context.lineWidth = 0.42;
         context.fill();
+        context.shadowBlur = 0;
+        context.strokeStyle = colors.stroke;
+        context.lineWidth = 0.72;
         context.stroke();
       });
     });
@@ -433,17 +460,16 @@ const setupGlobeCanvas = () => {
     context.clearRect(0, 0, size, size);
 
     const shell = context.createRadialGradient(
-      center * 0.72,
-      center * 0.62,
-      radius * 0.08,
+      center,
+      center,
+      radius * 0.12,
       center,
       center,
       radius * 1.16
     );
-    shell.addColorStop(0, "rgba(62, 132, 118, 0.1)");
-    shell.addColorStop(0.3, "rgba(62, 132, 118, 0.18)");
-    shell.addColorStop(0.58, "rgba(12, 28, 28, 0.86)");
-    shell.addColorStop(0.82, "rgba(3, 4, 6, 0.94)");
+    shell.addColorStop(0, "rgba(6, 16, 18, 0.78)");
+    shell.addColorStop(0.48, "rgba(7, 18, 20, 0.9)");
+    shell.addColorStop(0.78, "rgba(3, 5, 8, 0.96)");
     shell.addColorStop(1, "rgba(0, 0, 0, 0)");
 
     context.fillStyle = shell;
@@ -452,9 +478,9 @@ const setupGlobeCanvas = () => {
     context.fill();
 
     context.save();
+    drawGlobeGrid(time);
     drawLandMasses(time);
     context.globalCompositeOperation = "lighter";
-    drawGlobeGrid(time);
     routes.forEach((route, index) => drawRoute(route[0], route[1], index, time));
     context.restore();
 
@@ -520,25 +546,28 @@ const setupGlobeLinkCanvas = () => {
   const resizeCanvas = () => {
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
     width = window.innerWidth;
-    height = window.innerHeight;
+    height = Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight,
+      window.innerHeight
+    );
 
     globeLinkCanvas.width = Math.floor(width * ratio);
     globeLinkCanvas.height = Math.floor(height * ratio);
+    globeLinkCanvas.style.height = `${height}px`;
+    globeLinkCanvas.parentElement.style.height = `${height}px`;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
   };
 
   const getGlobeSource = () => {
     const rect = globeShell.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const isNearViewport = y > -height * 0.28 && y < height * 1.18;
-    const drawY = isNearViewport ? y : y < 0 ? -70 : height + 70;
+    const y = rect.top + window.scrollY + rect.height / 2;
 
     return {
       name: "hero",
       x: clamp(x, width * 0.08, width * 0.92),
       y,
-      drawY,
     };
   };
 
@@ -550,14 +579,13 @@ const setupGlobeLinkCanvas = () => {
           anchor.querySelector(".continent-map")?.getBoundingClientRect() ||
           rect;
         const x = mapRect.left + mapRect.width / 2;
-        const y = mapRect.top + mapRect.height / 2;
+        const y = mapRect.top + window.scrollY + mapRect.height / 2;
 
         return {
           name: anchor.dataset.continentAnchor || "",
           x: clamp(x, 24, width - 24),
           y,
-          drawY: clamp(y, -height * 0.18, height * 1.18),
-          absY: mapRect.top + window.scrollY + mapRect.height / 2,
+          absY: y,
         };
       })
       .sort((a, b) => a.absY - b.absY);
@@ -590,13 +618,15 @@ const setupGlobeLinkCanvas = () => {
     context.restore();
   };
 
-  const drawConnector = (source, target, active, index, time) => {
+  const drawConnector = (source, target, index, time) => {
     const color = continentColors[target.name] || "134, 247, 198";
-    const sourceY = source.drawY ?? source.y;
-    const targetY = target.drawY;
-    const isOffscreen = source.y !== sourceY || target.y !== targetY;
-    const baseAlpha = isOffscreen ? 0.11 : 0.17;
-    const activeAlpha = isOffscreen ? 0.22 : 0.34;
+    const sourceY = source.y;
+    const targetY = target.y;
+    const pulse = reducedMotion.matches
+      ? 0.45
+      : (Math.sin(time * 0.00135 + index * 1.1) + 1) / 2;
+    const baseAlpha = 0.18;
+    const lineAlpha = baseAlpha + pulse * 0.08;
     const verticalDistance = Math.abs(targetY - sourceY);
     const verticalDirection = targetY >= sourceY ? 1 : -1;
     const horizontalDirection = target.x >= source.x ? 1 : -1;
@@ -617,9 +647,9 @@ const setupGlobeLinkCanvas = () => {
     context.lineCap = "round";
     context.lineJoin = "round";
 
-    context.strokeStyle = `rgba(${color}, ${active ? activeAlpha : baseAlpha})`;
-    context.lineWidth = active ? 1.45 : 1;
-    context.setLineDash(active ? [3, 12] : [2, 18]);
+    context.strokeStyle = `rgba(${color}, ${lineAlpha})`;
+    context.lineWidth = 1 + pulse * 0.24;
+    context.setLineDash([2, 16]);
     context.lineDashOffset = reducedMotion.matches ? 0 : -time * 0.025;
     context.beginPath();
     context.moveTo(source.x, sourceY);
@@ -635,8 +665,8 @@ const setupGlobeLinkCanvas = () => {
 
     if (!reducedMotion.matches) {
       context.globalCompositeOperation = "lighter";
-      context.strokeStyle = `rgba(${color}, ${active ? 0.52 : 0.26})`;
-      context.lineWidth = active ? 2 : 1.4;
+      context.strokeStyle = `rgba(${color}, 0.42)`;
+      context.lineWidth = 1.65;
       context.setLineDash([72, estimatedLength + 120]);
       context.lineDashOffset = traceOffset;
       context.beginPath();
@@ -663,25 +693,13 @@ const setupGlobeLinkCanvas = () => {
 
     const source = getGlobeSource();
     const anchors = getAnchorMetrics();
-    const activeAnchor = anchors.reduce((nearest, anchor) => {
-      if (!nearest) return anchor;
-
-      return Math.abs(anchor.y - height * 0.48) <
-        Math.abs(nearest.y - height * 0.48)
-        ? anchor
-        : nearest;
-    }, null);
-
     const chainPoints = [source, ...anchors];
 
     for (let index = 0; index < chainPoints.length - 1; index += 1) {
       const chainSource = chainPoints[index];
       const chainTarget = chainPoints[index + 1];
-      const isActive =
-        activeAnchor?.name === chainSource.name ||
-        activeAnchor?.name === chainTarget.name;
 
-      drawConnector(chainSource, chainTarget, isActive, index, time);
+      drawConnector(chainSource, chainTarget, index, time);
     }
 
     if (!reducedMotion.matches) {
@@ -691,11 +709,6 @@ const setupGlobeLinkCanvas = () => {
 
   const handleResize = () => {
     resizeCanvas();
-    if (reducedMotion.matches) {
-      render(0);
-    }
-  };
-  const handleScroll = () => {
     if (reducedMotion.matches) {
       render(0);
     }
@@ -710,13 +723,13 @@ const setupGlobeLinkCanvas = () => {
   }
 
   window.addEventListener("resize", handleResize);
-  window.addEventListener("scroll", handleScroll, { passive: true });
+  window.addEventListener("load", handleResize);
 
   return () => {
     running = false;
     window.cancelAnimationFrame(animationFrame);
     window.removeEventListener("resize", handleResize);
-    window.removeEventListener("scroll", handleScroll);
+    window.removeEventListener("load", handleResize);
   };
 };
 
@@ -726,9 +739,11 @@ const cleanupGlobe = setupGlobeCanvas();
 const cleanupGlobeLinks = setupGlobeLinkCanvas();
 
 syncHeaderState();
+syncScrollTopState();
 
 window.addEventListener("scroll", () => {
   syncHeaderState();
+  syncScrollTopState();
 }, { passive: true });
 window.addEventListener("beforeunload", () => {
   cleanupPageTransitions();
