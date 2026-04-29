@@ -575,34 +575,34 @@ const setupGlobeCanvas = () => {
     : [];
   const continentLandColors = {
     "North America": {
-      fill: "rgba(240, 163, 91, 0.2)",
-      stroke: "rgba(255, 197, 130, 0.48)",
-      glow: "rgba(240, 163, 91, 0.2)",
+      fill: "rgba(244, 63, 94, 0.2)",
+      stroke: "rgba(244, 63, 94, 0.5)",
+      glow: "rgba(244, 63, 94, 0.2)",
     },
     "South America": {
-      fill: "rgba(75, 224, 160, 0.2)",
-      stroke: "rgba(134, 247, 198, 0.46)",
-      glow: "rgba(75, 224, 160, 0.2)",
+      fill: "rgba(14, 165, 233, 0.2)",
+      stroke: "rgba(14, 165, 233, 0.48)",
+      glow: "rgba(14, 165, 233, 0.2)",
     },
     Europe: {
-      fill: "rgba(126, 166, 255, 0.18)",
-      stroke: "rgba(198, 212, 255, 0.44)",
-      glow: "rgba(126, 166, 255, 0.18)",
+      fill: "rgba(148, 163, 184, 0.18)",
+      stroke: "rgba(226, 232, 240, 0.42)",
+      glow: "rgba(148, 163, 184, 0.18)",
     },
     Africa: {
-      fill: "rgba(75, 224, 160, 0.19)",
-      stroke: "rgba(134, 247, 198, 0.44)",
-      glow: "rgba(75, 224, 160, 0.18)",
+      fill: "rgba(14, 165, 233, 0.19)",
+      stroke: "rgba(14, 165, 233, 0.46)",
+      glow: "rgba(14, 165, 233, 0.18)",
     },
     Asia: {
-      fill: "rgba(126, 166, 255, 0.18)",
-      stroke: "rgba(198, 212, 255, 0.42)",
-      glow: "rgba(126, 166, 255, 0.17)",
+      fill: "rgba(148, 163, 184, 0.18)",
+      stroke: "rgba(226, 232, 240, 0.4)",
+      glow: "rgba(148, 163, 184, 0.17)",
     },
     Oceania: {
-      fill: "rgba(240, 163, 91, 0.16)",
-      stroke: "rgba(255, 197, 130, 0.36)",
-      glow: "rgba(240, 163, 91, 0.14)",
+      fill: "rgba(244, 63, 94, 0.16)",
+      stroke: "rgba(244, 63, 94, 0.36)",
+      glow: "rgba(244, 63, 94, 0.14)",
     },
   };
 
@@ -713,7 +713,7 @@ const setupGlobeCanvas = () => {
       for (let lon = -180; lon <= 180; lon += 4) {
         points.push(pointFromLatLon([lat, lon]));
       }
-      drawProjectedLine(points, time, "rgba(224, 220, 210, 0.15)", 0.9);
+      drawProjectedLine(points, time, "rgba(148, 163, 184, 0.16)", 0.9);
     }
 
     for (let lon = -150; lon <= 180; lon += 30) {
@@ -721,7 +721,7 @@ const setupGlobeCanvas = () => {
       for (let lat = -78; lat <= 78; lat += 4) {
         points.push(pointFromLatLon([lat, lon]));
       }
-      drawProjectedLine(points, time, "rgba(134, 247, 198, 0.1)", 0.8);
+      drawProjectedLine(points, time, "rgba(14, 165, 233, 0.12)", 0.8);
     }
   };
 
@@ -801,7 +801,7 @@ const setupGlobeCanvas = () => {
       );
     }
 
-    drawProjectedLine(points, time, "rgba(134, 247, 198, 0.24)", 1.15);
+    drawProjectedLine(points, time, "rgba(14, 165, 233, 0.26)", 1.15);
   };
 
   const render = (time) => {
@@ -817,9 +817,9 @@ const setupGlobeCanvas = () => {
       center,
       radius * 1.16
     );
-    shell.addColorStop(0, "rgba(6, 16, 18, 0.78)");
-    shell.addColorStop(0.48, "rgba(7, 18, 20, 0.9)");
-    shell.addColorStop(0.78, "rgba(3, 5, 8, 0.96)");
+    shell.addColorStop(0, "rgba(15, 23, 42, 0.78)");
+    shell.addColorStop(0.48, "rgba(15, 23, 42, 0.9)");
+    shell.addColorStop(0.78, "rgba(2, 6, 23, 0.96)");
     shell.addColorStop(1, "rgba(0, 0, 0, 0)");
 
     context.fillStyle = shell;
@@ -834,7 +834,7 @@ const setupGlobeCanvas = () => {
     routes.forEach((route, index) => drawRoute(route[0], route[1], index, time));
     context.restore();
 
-    context.strokeStyle = "rgba(134, 247, 198, 0.34)";
+    context.strokeStyle = "rgba(14, 165, 233, 0.36)";
     context.lineWidth = 1.3;
     context.beginPath();
     context.arc(center, center, radius, 0, Math.PI * 2);
@@ -879,11 +879,11 @@ const setupGlobeLinkCanvas = () => {
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const continentColors = {
-    "north-america": "240, 163, 91",
-    "south-america": "134, 247, 198",
-    europe: "178, 199, 255",
-    africa: "134, 247, 198",
-    asia: "178, 199, 255",
+    "north-america": "244, 63, 94",
+    "south-america": "14, 165, 233",
+    europe: "148, 163, 184",
+    africa: "14, 165, 233",
+    asia: "148, 163, 184",
   };
 
   let width = 0;
@@ -948,7 +948,7 @@ const setupGlobeLinkCanvas = () => {
     const drift = reducedMotion.matches ? 0 : (time * 0.008) % gridSize;
 
     for (let x = -gridSize + drift; x < width + gridSize; x += gridSize) {
-      context.strokeStyle = "rgba(224, 220, 210, 0.014)";
+      context.strokeStyle = "rgba(148, 163, 184, 0.014)";
       context.lineWidth = 1;
       context.beginPath();
       context.moveTo(x, 0);
@@ -957,7 +957,7 @@ const setupGlobeLinkCanvas = () => {
     }
 
     for (let y = -gridSize + drift * 0.5; y < height + gridSize; y += gridSize) {
-      context.strokeStyle = "rgba(224, 220, 210, 0.012)";
+      context.strokeStyle = "rgba(148, 163, 184, 0.012)";
       context.lineWidth = 1;
       context.beginPath();
       context.moveTo(0, y);
@@ -969,7 +969,7 @@ const setupGlobeLinkCanvas = () => {
   };
 
   const drawConnector = (source, target, index, time) => {
-    const color = continentColors[target.name] || "134, 247, 198";
+    const color = continentColors[target.name] || "14, 165, 233";
     const sourceY = source.y;
     const targetY = target.y;
     const pulse = reducedMotion.matches
