@@ -9,8 +9,62 @@ const continentAnchors = Array.from(
 );
 const heroStage = document.querySelector(".hero-stage");
 const scrollTopButton = document.querySelector(".scroll-top-button");
+const sectionScrollTargets = Array.from(
+  document.querySelectorAll("main > .hero, main > .metrics, main > .section")
+);
 const motionLibrary = window.Motion;
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+let scrollAnimationFrame = 0;
+
+const isElement = (target) => target instanceof Element;
+
+const clampValue = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const getMaxScrollTop = () =>
+  Math.max(
+    0,
+    document.documentElement.scrollHeight - window.innerHeight,
+    document.body.scrollHeight - window.innerHeight
+  );
+
+const easeScroll = (progress) =>
+  progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+const animateWindowScroll = (targetTop, options = {}) => {
+  const target = clampValue(targetTop, 0, getMaxScrollTop());
+  const start = window.scrollY;
+  const distance = target - start;
+
+  window.cancelAnimationFrame(scrollAnimationFrame);
+
+  if (reducedMotionQuery.matches || Math.abs(distance) < 2) {
+    window.scrollTo(0, target);
+    return 0;
+  }
+
+  const duration =
+    options.duration ?? clampValue(720 + Math.abs(distance) * 0.16, 820, 1180);
+  const startTime = performance.now();
+
+  const tick = (time) => {
+    const progress = clampValue((time - startTime) / duration, 0, 1);
+    const eased = easeScroll(progress);
+
+    window.scrollTo(0, start + distance * eased);
+
+    if (progress < 1) {
+      scrollAnimationFrame = window.requestAnimationFrame(tick);
+    } else {
+      window.scrollTo(0, target);
+    }
+  };
+
+  scrollAnimationFrame = window.requestAnimationFrame(tick);
+
+  return duration;
+};
 
 const syncHeaderState = () => {
   if (!topbar) return;
@@ -28,6 +82,287 @@ const syncScrollTopState = () => {
   } else {
     scrollTopButton.setAttribute("tabindex", "-1");
   }
+};
+
+const setupSmoothScrolling = () => {
+  const handleAnchorClick = (event) => {
+    if (!isElement(event.target)) return;
+
+    const link = event.target.closest('a[href^="#"]');
+    if (!link || event.defaultPrevented || event.metaKey || event.ctrlKey) {
+      return;
+    }
+
+    const hash = link.getAttribute("href");
+    if (!hash || hash === "#") return;
+
+    const target = hash === "#top"
+      ? document.querySelector("#top")
+      : document.getElementById(decodeURIComponent(hash.slice(1)));
+
+    if (!target) return;
+
+    event.preventDefault();
+
+    const targetTop = hash === "#top"
+      ? 0
+      : target.getBoundingClientRect().top + window.scrollY;
+
+    animateWindowScroll(targetTop, { duration: 980 });
+
+    window.history.pushState(null, "", hash);
+  };
+
+  document.addEventListener("click", handleAnchorClick);
+
+  return () => document.removeEventListener("click", handleAnchorClick);
+};
+
+const setupSectionScrolling = () => {
+  if (reducedMotionQuery.matches || sectionScrollTargets.length < 2) {
+    return () => {};
+  }
+
+  const root = document.documentElement;
+  let sectionTops = [];
+  let activeIndex = 0;
+  let isPaging = false;
+  let releaseTimer = 0;
+  let resizeTimer = 0;
+  let touchStart = null;
+
+  const getScrollableParent = (target, deltaY) => {
+    let current = isElement(target) ? target : null;
+
+    while (current && current !== document.body) {
+      const style = window.getComputedStyle(current);
+      const canScroll = /(auto|scroll)/.test(style.overflowY);
+
+      if (canScroll && current.scrollHeight > current.clientHeight + 1) {
+        const atTop = current.scrollTop <= 0;
+        const atBottom =
+          current.scrollTop + current.clientHeight >= current.scrollHeight - 1;
+
+        if ((deltaY < 0 && !atTop) || (deltaY > 0 && !atBottom)) {
+          return current;
+        }
+      }
+
+      current = current.parentElement;
+    }
+
+    return null;
+  };
+
+  const syncActiveIndex = () => {
+    const currentY = window.scrollY;
+    let nearestIndex = 0;
+    let nearestDistance = Infinity;
+
+    sectionTops.forEach((top, index) => {
+      const distance = Math.abs(top - currentY);
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    activeIndex = nearestIndex;
+    return nearestIndex;
+  };
+
+  const measureSections = () => {
+    const maxScroll = getMaxScrollTop();
+
+    sectionTops = sectionScrollTargets.map((section) =>
+      clampValue(
+        section.getBoundingClientRect().top + window.scrollY,
+        0,
+        maxScroll
+      )
+    );
+
+    syncActiveIndex();
+  };
+
+  const goToSection = (index) => {
+    const targetIndex = clampValue(index, 0, sectionTops.length - 1);
+    const targetTop = sectionTops[targetIndex] ?? 0;
+
+    if (Math.abs(window.scrollY - targetTop) < 2) {
+      activeIndex = targetIndex;
+      return;
+    }
+
+    isPaging = true;
+    activeIndex = targetIndex;
+
+    const duration = animateWindowScroll(targetTop, {
+      duration: clampValue(
+        760 + Math.abs(targetTop - window.scrollY) * 0.17,
+        860,
+        1240
+      ),
+    });
+
+    window.clearTimeout(releaseTimer);
+    releaseTimer = window.setTimeout(() => {
+      isPaging = false;
+      syncActiveIndex();
+    }, duration + 90);
+  };
+
+  const stepSection = (direction) => {
+    if (isPaging || direction === 0) return;
+
+    measureSections();
+
+    const currentIndex = syncActiveIndex();
+    const currentTop = sectionTops[currentIndex] ?? 0;
+    const shouldSettleCurrent =
+      direction < 0 && window.scrollY > currentTop + window.innerHeight * 0.12;
+    const targetIndex = shouldSettleCurrent
+      ? currentIndex
+      : currentIndex + direction;
+
+    goToSection(targetIndex);
+  };
+
+  const handleWheel = (event) => {
+    if (
+      event.defaultPrevented ||
+      event.ctrlKey ||
+      event.metaKey ||
+      Math.abs(event.deltaX) > Math.abs(event.deltaY)
+    ) {
+      return;
+    }
+
+    if (getScrollableParent(event.target, event.deltaY)) {
+      return;
+    }
+
+    const direction = event.deltaY > 0 ? 1 : -1;
+
+    if (Math.abs(event.deltaY) < 4) return;
+
+    event.preventDefault();
+    stepSection(direction);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+
+    if (
+      isElement(event.target) &&
+      event.target.closest("input, textarea, select, [contenteditable='true']")
+    ) {
+      return;
+    }
+
+    const forwardKeys = new Set(["ArrowDown", "PageDown"]);
+    const backKeys = new Set(["ArrowUp", "PageUp"]);
+
+    if (event.code === "Space") {
+      event.preventDefault();
+      stepSection(event.shiftKey ? -1 : 1);
+      return;
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault();
+      measureSections();
+      goToSection(0);
+      return;
+    }
+
+    if (event.key === "End") {
+      event.preventDefault();
+      measureSections();
+      goToSection(sectionScrollTargets.length - 1);
+      return;
+    }
+
+    if (forwardKeys.has(event.key) || backKeys.has(event.key)) {
+      event.preventDefault();
+      stepSection(forwardKeys.has(event.key) ? 1 : -1);
+    }
+  };
+
+  const handleTouchStart = (event) => {
+    if (event.touches.length !== 1 || isPaging) return;
+
+    const touch = event.touches[0];
+    touchStart = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+  };
+
+  const handleTouchMove = (event) => {
+    if (!touchStart || event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touch.clientY - touchStart.y;
+
+    if (Math.abs(deltaY) > 14 && Math.abs(deltaY) > Math.abs(deltaX) * 1.15) {
+      event.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (event) => {
+    if (!touchStart || event.changedTouches.length !== 1) {
+      touchStart = null;
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStart.x;
+    const deltaY = touchStart.y - touch.clientY;
+
+    touchStart = null;
+
+    if (Math.abs(deltaY) < 54 || Math.abs(deltaY) < Math.abs(deltaX) * 1.12) {
+      return;
+    }
+
+    stepSection(deltaY > 0 ? 1 : -1);
+  };
+
+  const handleResize = () => {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(measureSections, 120);
+  };
+
+  root.classList.add("section-scroll-ready");
+  measureSections();
+
+  window.addEventListener("wheel", handleWheel, { passive: false });
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("touchstart", handleTouchStart, { passive: true });
+  window.addEventListener("touchmove", handleTouchMove, { passive: false });
+  window.addEventListener("touchend", handleTouchEnd, { passive: true });
+  window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+  window.addEventListener("resize", handleResize);
+  window.addEventListener("load", measureSections);
+
+  return () => {
+    root.classList.remove("section-scroll-ready");
+    window.clearTimeout(releaseTimer);
+    window.clearTimeout(resizeTimer);
+    window.removeEventListener("wheel", handleWheel);
+    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("touchstart", handleTouchStart);
+    window.removeEventListener("touchmove", handleTouchMove);
+    window.removeEventListener("touchend", handleTouchEnd);
+    window.removeEventListener("touchcancel", handleTouchEnd);
+    window.removeEventListener("resize", handleResize);
+    window.removeEventListener("load", measureSections);
+  };
 };
 
 const setupFallbackReveals = () => {
@@ -327,7 +662,7 @@ const setupGlobeCanvas = () => {
       x: center + rotated.x * radius * perspective,
       y: center - rotated.y * radius * perspective,
       z: rotated.z,
-      visible: rotated.z > -0.22,
+      visible: rotated.z > 0.02,
     };
   };
 
@@ -737,6 +1072,8 @@ const cleanupPageTransitions = setupMotionPageTransitions();
 const cleanupHeroStageMotion = setupHeroStageMotion();
 const cleanupGlobe = setupGlobeCanvas();
 const cleanupGlobeLinks = setupGlobeLinkCanvas();
+const cleanupSmoothScrolling = setupSmoothScrolling();
+const cleanupSectionScrolling = setupSectionScrolling();
 
 syncHeaderState();
 syncScrollTopState();
@@ -750,4 +1087,6 @@ window.addEventListener("beforeunload", () => {
   cleanupHeroStageMotion();
   cleanupGlobe();
   cleanupGlobeLinks();
+  cleanupSmoothScrolling();
+  cleanupSectionScrolling();
 });
