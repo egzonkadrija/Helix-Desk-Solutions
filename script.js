@@ -126,7 +126,7 @@ const setupMotionPageTransitions = () => {
   if (motion.hover) {
     document
       .querySelectorAll(
-        ".button, .header-cta, .contact-links a, .scroll-top-button"
+        ".button, .header-cta, .contact-links a, .scroll-top-button, .call-button"
       )
       .forEach((item) => {
         cleanups.push(
@@ -151,7 +151,7 @@ const setupMotionPageTransitions = () => {
 
   if (motion.press) {
     document
-      .querySelectorAll(".button, .header-cta, .scroll-top-button")
+      .querySelectorAll(".button, .header-cta, .scroll-top-button, .call-button")
       .forEach((item) => {
         cleanups.push(
           motion.press(item, () => {
