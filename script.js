@@ -558,33 +558,27 @@ const setupGlobeCanvas = () => {
     : [];
   const continentLandColors = {
     "North America": {
-      fill: "rgba(244, 63, 94, 0.2)",
-      stroke: "rgba(244, 63, 94, 0.5)",
+      fill: "rgba(244, 63, 94, 0.26)",
       glow: "rgba(244, 63, 94, 0.2)",
     },
     "South America": {
-      fill: "rgba(14, 165, 233, 0.2)",
-      stroke: "rgba(14, 165, 233, 0.48)",
+      fill: "rgba(14, 165, 233, 0.26)",
       glow: "rgba(14, 165, 233, 0.2)",
     },
     Europe: {
-      fill: "rgba(148, 163, 184, 0.18)",
-      stroke: "rgba(226, 232, 240, 0.42)",
+      fill: "rgba(148, 163, 184, 0.23)",
       glow: "rgba(148, 163, 184, 0.18)",
     },
     Africa: {
-      fill: "rgba(14, 165, 233, 0.19)",
-      stroke: "rgba(14, 165, 233, 0.46)",
+      fill: "rgba(14, 165, 233, 0.25)",
       glow: "rgba(14, 165, 233, 0.18)",
     },
     Asia: {
-      fill: "rgba(148, 163, 184, 0.18)",
-      stroke: "rgba(226, 232, 240, 0.4)",
+      fill: "rgba(148, 163, 184, 0.23)",
       glow: "rgba(148, 163, 184, 0.17)",
     },
     Oceania: {
-      fill: "rgba(244, 63, 94, 0.16)",
-      stroke: "rgba(244, 63, 94, 0.36)",
+      fill: "rgba(244, 63, 94, 0.22)",
       glow: "rgba(244, 63, 94, 0.14)",
     },
   };
@@ -595,6 +589,7 @@ const setupGlobeCanvas = () => {
   let animationFrame = 0;
   let running = true;
 
+  const frontFaceCutoff = 0.12;
   const toRadians = (degrees) => (degrees * Math.PI) / 180;
   const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -660,7 +655,7 @@ const setupGlobeCanvas = () => {
       x: center + rotated.x * radius * perspective,
       y: center - rotated.y * radius * perspective,
       z: rotated.z,
-      visible: rotated.z > 0.02,
+      visible: rotated.z > frontFaceCutoff,
     };
   };
 
@@ -722,45 +717,32 @@ const setupGlobeCanvas = () => {
       const colors = continentLandColors[country.c] || continentLandColors.Africa;
 
       country.r.forEach((ring) => {
-        let drawing = false;
-        let visiblePoints = 0;
+        const projectedRing = ring.map((coordinate) =>
+          projectPoint(pointFromLatLon(coordinate), time)
+        );
+
+        if (
+          projectedRing.length < 3 ||
+          projectedRing.some((point) => !point.visible)
+        ) {
+          return;
+        }
 
         context.beginPath();
-        ring.forEach((coordinate) => {
-          const projected = projectPoint(pointFromLatLon(coordinate), time);
-
-          if (!projected.visible) {
-            if (drawing) {
-              context.closePath();
-              drawing = false;
-            }
-            return;
-          }
-
-          visiblePoints += 1;
-
-          if (!drawing) {
+        projectedRing.forEach((projected, index) => {
+          if (index === 0) {
             context.moveTo(projected.x, projected.y);
-            drawing = true;
           } else {
             context.lineTo(projected.x, projected.y);
           }
         });
-
-        if (drawing) {
-          context.closePath();
-        }
-
-        if (visiblePoints < 3) return;
+        context.closePath();
 
         context.shadowBlur = 7;
         context.shadowColor = colors.glow;
         context.fillStyle = colors.fill;
         context.fill();
         context.shadowBlur = 0;
-        context.strokeStyle = colors.stroke;
-        context.lineWidth = 0.72;
-        context.stroke();
       });
     });
 

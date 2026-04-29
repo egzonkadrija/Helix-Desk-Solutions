@@ -743,6 +743,16 @@ main > .section {
   --continent-color: rgba(148, 163, 184, 0.96);
 }
 
+.continent-marker-europe {
+  width: min(100%, clamp(18.5rem, 32vw, 28rem));
+  min-height: clamp(12.5rem, 22vw, 17.5rem);
+}
+
+.continent-marker-europe .continent-map {
+  transform: scale(1.18);
+  transform-origin: center;
+}
+
 .metrics .continent-marker {
   grid-column: 5;
   grid-row: 1;
@@ -803,10 +813,7 @@ main > .section {
   padding: 1.25rem 1.2rem;
   border: 1px solid rgba(14, 165, 233, 0.36);
   border-radius: var(--radius);
-  background:
-    linear-gradient(90deg, rgba(14, 165, 233, 0.14), transparent 32%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.26));
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+  background: rgba(14, 165, 233, 0.045);
   counter-increment: service;
   position: relative;
 }
