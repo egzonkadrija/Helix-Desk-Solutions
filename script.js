@@ -1,6 +1,5 @@
 const topbar = document.querySelector(".topbar");
 const reveals = document.querySelectorAll("[data-reveal]");
-const workflowSteps = document.querySelectorAll("[data-step]");
 const globeLinkCanvas = document.querySelector("#globe-link-canvas");
 const globeCanvas = document.querySelector("#globe-canvas");
 const globeShell = document.querySelector(".globe-shell");
@@ -528,22 +527,6 @@ const setupMotionPageTransitions = () => {
     document.body.classList.remove("motion-ready");
   };
 };
-
-const workflowObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        workflowSteps.forEach((step) => step.classList.remove("is-active"));
-        entry.target.classList.add("is-active");
-      }
-    });
-  },
-  {
-    threshold: 0.55,
-  }
-);
-
-workflowSteps.forEach((step) => workflowObserver.observe(step));
 
 const setupHeroStageMotion = () => {
   if (!heroStage) return () => {};

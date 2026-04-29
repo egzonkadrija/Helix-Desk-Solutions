@@ -236,9 +236,7 @@ a {
 .topnav a,
 .header-cta,
 .button,
-.contact-links a,
-.service-line,
-.coverage-item {
+.contact-links a {
   transition:
     color 180ms ease,
     border-color 180ms ease,
@@ -792,43 +790,25 @@ main > .section {
 }
 
 .service-lines {
+  display: grid;
+  gap: 0.85rem;
   margin-top: 2.2rem;
   counter-reset: service;
 }
 
 .service-line {
   display: grid;
-  grid-template-columns: 5.8rem minmax(0, 1fr) 1.6rem;
+  grid-template-columns: 5.8rem minmax(0, 1fr);
   gap: 1.15rem;
-  padding: 1.35rem 0;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 1.25rem 1.2rem;
+  border: 1px solid rgba(14, 165, 233, 0.36);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(90deg, rgba(14, 165, 233, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.26));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
   counter-increment: service;
   position: relative;
-}
-
-.service-line:last-child {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.service-line::after {
-  content: ">";
-  color: rgba(14, 165, 233, 0.72);
-  font-size: 1.5rem;
-  opacity: 0;
-  transform: translateX(-8px);
-  transition:
-    opacity 180ms ease,
-    transform 180ms ease;
-}
-
-.service-line:hover {
-  border-color: rgba(14, 165, 233, 0.32);
-  transform: translateX(8px);
-}
-
-.service-line:hover::after {
-  opacity: 1;
-  transform: translateX(0);
 }
 
 .service-line span,
@@ -881,31 +861,15 @@ main > .section {
   min-height: 168px;
   padding: 1.45rem 1.1rem 1.45rem 1.5rem;
   border-top: 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-  background:
-    linear-gradient(90deg, rgba(14, 165, 233, 0.05), transparent 24%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.28), rgba(2, 6, 23, 0.12));
-  opacity: 0.62;
-  transform: translateX(0) scale(0.99);
-  position: relative;
-  overflow: hidden;
-  transition:
-    opacity 420ms ease,
-    transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 420ms ease,
-    background 420ms ease,
-    box-shadow 420ms ease;
-  will-change: opacity, transform;
-}
-
-.workflow-step.is-active {
-  opacity: 1;
-  transform: translateX(-0.65rem) scale(1);
-  border-color: rgba(14, 165, 233, 0.36);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid rgba(14, 165, 233, 0.36);
   background:
     linear-gradient(90deg, rgba(14, 165, 233, 0.14), transparent 32%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.26));
+  opacity: 1;
+  transform: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
 }
 
 .workflow-step::before {
@@ -915,25 +879,7 @@ main > .section {
   bottom: 1.45rem;
   left: 0;
   width: 1px;
-  background: rgba(148, 163, 184, 0.2);
-}
-
-.workflow-step.is-active::before {
   background: linear-gradient(180deg, rgba(14, 165, 233, 0.22), rgba(14, 165, 233, 0.92));
-}
-
-.workflow-step::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 0 34%, rgba(14, 165, 233, 0.12) 48%, transparent 64%);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-120%);
-}
-
-.workflow-step.is-active::after {
-  animation: workflowSweep 960ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .coverage {
@@ -965,16 +911,8 @@ main > .section {
   justify-items: center;
   text-align: center;
   padding: 1.2rem;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(14, 165, 233, 0.36);
   border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.01)),
-    rgba(255, 255, 255, 0.012);
-}
-
-.coverage-item:hover {
-  transform: translateY(-4px);
-  border-color: rgba(14, 165, 233, 0.36);
   background: rgba(14, 165, 233, 0.045);
 }
 
@@ -1315,22 +1253,6 @@ body.motion-ready [data-reveal] {
   }
 }
 
-@keyframes workflowSweep {
-  0% {
-    opacity: 0;
-    transform: translateX(-120%);
-  }
-
-  35% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateX(120%);
-  }
-}
-
 @keyframes contactSweep {
   0%,
   100% {
@@ -1645,10 +1567,6 @@ body.motion-ready [data-reveal] {
     gap: 0.75rem;
   }
 
-  .service-line::after {
-    display: none;
-  }
-
   .workflow-step,
   .coverage-item {
     min-height: auto;
@@ -1656,10 +1574,6 @@ body.motion-ready [data-reveal] {
 
   .workflow-step {
     padding: 1.2rem 0.9rem 1.2rem 1rem;
-  }
-
-  .workflow-step.is-active {
-    transform: none;
   }
 
   .coverage-grid {
@@ -1817,7 +1731,4 @@ body.motion-ready [data-reveal] {
     transform: none;
   }
 
-  .workflow-step::after {
-    display: none;
-  }
 }
