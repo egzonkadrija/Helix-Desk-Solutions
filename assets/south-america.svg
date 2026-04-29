@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 78" role="img" aria-label="South America map outline">
   <style>
-    .continent-country{fill:rgba(7,9,12,.76);stroke:rgb(159, 244, 215);stroke-width:.52;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+    .continent-country{fill:rgba(9,8,11,.76);stroke:rgb(134, 247, 198);stroke-width:.52;stroke-linejoin:round;vector-effect:non-scaling-stroke}
   </style>
   <title>South America</title>
   <desc>Country polygons generated from Natural Earth public domain Admin 0 data.</desc>

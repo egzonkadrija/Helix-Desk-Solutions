@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="64 23 54 34" role="img" aria-label="Asia map outline">
   <style>
-    .continent-country{fill:rgba(7,9,12,.76);stroke:rgb(168, 205, 255);stroke-width:.52;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+    .continent-country{fill:rgba(9,8,11,.76);stroke:rgb(178, 199, 255);stroke-width:.52;stroke-linejoin:round;vector-effect:non-scaling-stroke}
   </style>
   <title>Asia</title>
   <desc>Country polygons generated from Natural Earth public domain Admin 0 data.</desc>
