@@ -14,6 +14,7 @@ const sectionScrollTargets = Array.from(
 );
 const motionLibrary = window.Motion;
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+const sectionPagingQuery = window.matchMedia("(min-width: 761px)");
 let scrollAnimationFrame = 0;
 
 const isElement = (target) => target instanceof Element;
@@ -131,6 +132,8 @@ const setupSectionScrolling = () => {
   let resizeTimer = 0;
   let touchStart = null;
 
+  const isSectionPagingEnabled = () => sectionPagingQuery.matches;
+
   const getScrollableParent = (target, deltaY) => {
     let current = isElement(target) ? target : null;
 
@@ -214,7 +217,7 @@ const setupSectionScrolling = () => {
   };
 
   const stepSection = (direction) => {
-    if (isPaging || direction === 0) return;
+    if (!isSectionPagingEnabled() || isPaging || direction === 0) return;
 
     measureSections();
 
@@ -230,6 +233,8 @@ const setupSectionScrolling = () => {
   };
 
   const handleWheel = (event) => {
+    if (!isSectionPagingEnabled()) return;
+
     if (
       event.defaultPrevented ||
       event.ctrlKey ||
@@ -252,6 +257,8 @@ const setupSectionScrolling = () => {
   };
 
   const handleKeyDown = (event) => {
+    if (!isSectionPagingEnabled()) return;
+
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
       return;
     }
@@ -293,7 +300,9 @@ const setupSectionScrolling = () => {
   };
 
   const handleTouchStart = (event) => {
-    if (event.touches.length !== 1 || isPaging) return;
+    if (!isSectionPagingEnabled() || event.touches.length !== 1 || isPaging) {
+      return;
+    }
 
     const touch = event.touches[0];
     touchStart = {
@@ -303,6 +312,7 @@ const setupSectionScrolling = () => {
   };
 
   const handleTouchMove = (event) => {
+    if (!isSectionPagingEnabled()) return;
     if (!touchStart || event.touches.length !== 1) return;
 
     const touch = event.touches[0];
@@ -315,6 +325,11 @@ const setupSectionScrolling = () => {
   };
 
   const handleTouchEnd = (event) => {
+    if (!isSectionPagingEnabled()) {
+      touchStart = null;
+      return;
+    }
+
     if (!touchStart || event.changedTouches.length !== 1) {
       touchStart = null;
       return;

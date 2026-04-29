@@ -1450,6 +1450,14 @@ body.motion-ready [data-reveal] {
 @media (max-width: 760px) {
   html {
     scroll-padding-top: 0;
+    scroll-snap-type: none;
+  }
+
+  main > .hero,
+  main > .metrics,
+  main > .section {
+    scroll-snap-align: none;
+    scroll-snap-stop: normal;
   }
 
   .topbar {
